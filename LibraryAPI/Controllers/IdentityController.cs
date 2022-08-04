@@ -95,7 +95,7 @@ namespace LibraryAPI.Controllers
                 audience: "all",
                 signingCredentials: signingCredentials);
 
-            return Ok(new { token = tokenHandler.WriteToken(token), expiration = token.ValidTo });
+            return Ok(new { token = tokenHandler.WriteToken(token), expiration = token.ValidTo, username = user.UserName });
         }
 
         [HttpGet]
