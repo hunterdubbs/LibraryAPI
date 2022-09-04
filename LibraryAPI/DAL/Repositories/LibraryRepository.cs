@@ -1,4 +1,5 @@
 ﻿using LibraryAPI.Domain;
+using LibraryAPI.Domain.Enum;
 using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
@@ -21,12 +22,12 @@ namespace LibraryAPI.DAL.Repositories
             cmd.Parameters.Add(CreateParameter("@sOwner", library.Owner));
             cmd.Parameters.Add(CreateParameter("@dtCreated", DateTime.Now));
             cmd.ExecuteNonQuery();
-            library.ID = (int)((MySqlCommand)cmd).LastInsertedId;
+            library.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
         }
 
         public List<Library> GetAllByUser(string userID)
         {
-            DbCommand cmd = CreateCommand(@"SELECT l.* FROM tLibrary l INNER JOIN tPermission p WHERE l.iID=p.iLibraryID AND p.sUserID=@sUserID AND p.iPermissionLevel > 0");
+            DbCommand cmd = CreateCommand(@"SELECT l.*, p.iPermissionLevel FROM tLibrary l INNER JOIN tPermission p WHERE l.iID=p.iLibraryID AND p.sUserID=@sUserID AND p.iPermissionLevel > 0");
             cmd.Parameters.Add(CreateParameter("@sUserID", userID));
             return ExtractData(cmd);
         }
@@ -43,6 +44,7 @@ namespace LibraryAPI.DAL.Repositories
                     result.Name = ReadString(reader, "sName");
                     result.Owner = ReadString(reader, "sOwner");
                     result.CreatedDate = ReadDateTime(reader, "dtCreated");
+                    result.Permissions = (PermissionType)ReadInt(reader, "iPermissionLevel");
                     results.Add(result);
                 }
             }

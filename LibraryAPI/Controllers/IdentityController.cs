@@ -27,15 +27,25 @@ namespace LibraryAPI.Controllers
         private SymmetricSecurityKey symmetricSecurityKey;
         private SigningCredentials signingCredentials;
         private JwtSecurityTokenHandler tokenHandler;
+        private TokenValidationParameters validationParameters;
+        private string tokenIssuer;
 
         public IdentityController(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration)
         {
             this.userManager = userManager;
             this.roleManager = roleManager;                                                                                                                                                                                                                                                              
             this.configuration = configuration;
+            tokenIssuer = configuration["BaseURL"]; //TODO: enable in prod
             symmetricSecurityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT-SECRET-KEY"]));
             signingCredentials = new SigningCredentials(symmetricSecurityKey, SecurityAlgorithms.HmacSha256);
             tokenHandler = new JwtSecurityTokenHandler();
+            validationParameters = new TokenValidationParameters()
+            {
+                ValidateIssuer = true,
+                ValidIssuer = tokenIssuer, 
+                IssuerSigningKey = symmetricSecurityKey,
+                ValidateAudience = false
+            };
         }
 
         [HttpPost]
@@ -83,19 +93,88 @@ namespace LibraryAPI.Controllers
             if (isLocked) return BadRequest("account is locked");
 
             //login success
-            List<Claim> claims = new List<Claim>(2);
+            List<Claim> claims = new List<Claim>(3);
             claims.Add(new Claim(ClaimTypes.Name, user.UserName));
             claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
             claims.Add(new Claim(ClaimTypes.PrimarySid, user.Id));
 
             JwtSecurityToken token = new JwtSecurityToken(
-                issuer: configuration["BaseURL"],
+                issuer: tokenIssuer,
                 claims: claims,
                 expires: DateTime.Now.AddHours(12),
                 audience: "all",
                 signingCredentials: signingCredentials);
 
-            return Ok(new { token = tokenHandler.WriteToken(token), expiration = token.ValidTo, username = user.UserName });
+            List<Claim> refreshClaims = new List<Claim>(2);
+            claims.Add(new Claim(ClaimTypes.PrimarySid, user.Id));
+            claims.Add(new Claim("TokenType", "REFRESH"));
+
+            JwtSecurityToken refreshToken = new JwtSecurityToken(
+                issuer: tokenIssuer,
+                claims: refreshClaims,
+                expires: DateTime.Now.AddDays(30),
+                audience: "all",
+                signingCredentials: signingCredentials);
+
+            return Ok(new { 
+                id = user.Id, 
+                token = tokenHandler.WriteToken(token), 
+                refreshToken = tokenHandler.WriteToken(refreshToken),
+                expiration = token.ValidTo, 
+                username = user.UserName 
+            });
+        }
+
+        [HttpPost]
+        [Route("refresh")]
+        public async Task<IActionResult> RefreshAuth([FromBody] RefreshRequest request)
+        {
+            //validate refresh token
+            try
+            {
+                var claimsPrincipal = tokenHandler.ValidateToken(request.RefreshToken, validationParameters, out SecurityToken validatedToken);
+                string tokenType = claimsPrincipal.FindFirstValue("TokenType");
+                if(tokenType == null || tokenType.ToUpper() != "REFRESH") return BadRequest();
+            }catch(Exception e)
+            {
+                return BadRequest();
+            }
+
+            //get user and check that they're valid
+            ApplicationUser user = await userManager.FindByIdAsync(request.UserId);
+            if (user == null) return BadRequest();
+            bool isLocked = await userManager.IsLockedOutAsync(user);
+            if (isLocked) return BadRequest();
+
+            //generate new tokens
+            List<Claim> claims = new List<Claim>(3);
+            claims.Add(new Claim(ClaimTypes.Name, user.UserName));
+            claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
+            claims.Add(new Claim(ClaimTypes.PrimarySid, user.Id));
+
+            JwtSecurityToken token = new JwtSecurityToken(
+                issuer: tokenIssuer,
+                claims: claims,
+                expires: DateTime.Now.AddHours(12),
+                audience: "all",
+                signingCredentials: signingCredentials);
+
+            List<Claim> refreshClaims = new List<Claim>(2);
+            claims.Add(new Claim(ClaimTypes.PrimarySid, user.Id));
+            claims.Add(new Claim("TokenType", "REFRESH"));
+
+            JwtSecurityToken refreshToken = new JwtSecurityToken(
+                issuer: tokenIssuer,
+                claims: refreshClaims,
+                expires: DateTime.Now.AddDays(30),
+                audience: "all",
+                signingCredentials: signingCredentials);
+
+            return Ok(new
+            {
+                token = tokenHandler.WriteToken(token),
+                refreshToken = tokenHandler.WriteToken(refreshToken)
+            });
         }
 
         [HttpGet]

@@ -73,9 +73,3 @@ CREATE TABLE tCollectionBookXREF(
 );
 
 
-SELECT * 
-FROM tBook b LEFT OUTER JOIN
-tBookAuthorXREF bax ON b.iID=bax.iBookID INNER JOIN
-tAuthor a ON bax.iAuthorID=a.iID
-GROUP BY b.*
-ORDER BY bax.iListPosition;
