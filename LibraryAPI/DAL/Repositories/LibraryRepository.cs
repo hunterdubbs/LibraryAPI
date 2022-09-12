@@ -25,11 +25,33 @@ namespace LibraryAPI.DAL.Repositories
             library.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
         }
 
+        public void Update(Library library)
+        {
+            DbCommand cmd = CreateCommand(@"UPDATE tLibrary SET sName=@sName WHERE iID=@iID");
+            cmd.Parameters.Add(CreateParameter("@sName", library.Name));
+            cmd.Parameters.Add(CreateParameter("@iID", library.ID));
+            cmd.ExecuteNonQuery();
+        }
+
+        public void Delete(int libraryID)
+        {
+            DbCommand cmd = CreateCommand(@"DELETE FROM tLibrary WHERE iID=@iID");
+            cmd.Parameters.Add(CreateParameter("@iID", libraryID));
+            cmd.ExecuteNonQuery();
+        }
+
         public List<Library> GetAllByUser(string userID)
         {
             DbCommand cmd = CreateCommand(@"SELECT l.*, p.iPermissionLevel FROM tLibrary l INNER JOIN tPermission p WHERE l.iID=p.iLibraryID AND p.sUserID=@sUserID AND p.iPermissionLevel > 0");
             cmd.Parameters.Add(CreateParameter("@sUserID", userID));
             return ExtractData(cmd);
+        }
+
+        public Library GetByID(int id)
+        {
+            DbCommand cmd = CreateCommand(@"SELECT l.*, p.iPermissionLevel FROM tLibrary l INNER JOIN tPermission p WHERE l.iID=p.iLibraryID AND l.iID=@iID AND p.iPermissionLevel > 0");
+            cmd.Parameters.Add(CreateParameter("@iID", id));
+            return ExtractData(cmd).FirstOrDefault();
         }
 
         private List<Library> ExtractData(DbCommand cmd)

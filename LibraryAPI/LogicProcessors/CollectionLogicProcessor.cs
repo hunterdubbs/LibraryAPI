@@ -64,5 +64,50 @@ namespace LibraryAPI.LogicProcessors
             result.Value = libraryDataContext.CollectionRepository.GetAllByLibraryID(libraryID);
             return result;
         }
+
+        public Result CreateCollection(Collection collection, string userID, out bool permissionDenied)
+        {
+            Result result = new Result();
+            permissionDenied = false;
+
+            if(!permissionLogicProcessor.CheckPermissionOnLibraryID(collection.LibraryID, userID, Domain.Enum.PermissionType.Editor))
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have permission to add to this library");
+            }
+
+            libraryDataContext.CollectionRepository.Add(collection);
+            return result;
+        }
+
+        public Result ModifyCollection(Collection collection, string userID, out bool permissionDenied)
+        {
+            Result result = new Result();
+            permissionDenied = false;
+
+            if (!permissionLogicProcessor.CheckPermissionOnLibraryID(collection.LibraryID, userID, Domain.Enum.PermissionType.Editor))
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have permission to add to this library");
+            }
+
+            libraryDataContext.CollectionRepository.Update(collection);
+            return result;
+        }
+
+        public Result DeleteCollection(int collectionID, string userID, out bool permissionDenied)
+        {
+            Result result = new Result();
+            permissionDenied = false;
+
+            if (!permissionLogicProcessor.CheckPermissionOnCollectionID(collectionID, userID, Domain.Enum.PermissionType.Editor))
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have permission to add to this library");
+            }
+
+            libraryDataContext.CollectionRepository.Delete(collectionID);
+            return result;
+        }
     }
 }

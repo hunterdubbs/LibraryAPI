@@ -54,6 +54,60 @@ namespace LibraryAPI.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("delete")]
+        public IActionResult DeleteLibrary([FromBody] DeleteLibraryRequest request)
+        {
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+
+            using(UnitOfWork unitOfWork = new UnitOfWork())
+            {
+                unitOfWork.Begin();
+
+                Result result = libraryLogicProcessor.DeleteLibrary(request.LibraryID, userID, out bool permissionDenied);
+
+                if (result.Succeeded)
+                {
+                    unitOfWork.Commit();
+                    return Ok();
+                }
+                else
+                {
+                    if (permissionDenied) return Forbid();
+                    return StatusCode(500);
+                }
+            }
+        }
+
+        [HttpPost]
+        [Route("modify")]
+        public IActionResult ModifyLibrary([FromBody] ModifyLibraryRequest request)
+        {
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+
+            using(UnitOfWork unitOfWork = new UnitOfWork())
+            {
+                unitOfWork.Begin();
+
+                Library library = libraryDataContext.LibraryRepository.GetByID(request.LibraryID);
+                if (library == null) return BadRequest("Library not found");
+
+                library.Name = request.Name;
+                Result result = libraryLogicProcessor.UpdateLibrary(library, userID, out bool permissionDenied);
+
+                if (result.Succeeded)
+                {
+                    unitOfWork.Commit();
+                    return Ok();
+                }
+                else
+                {
+                    if (permissionDenied) return Forbid();
+                    return StatusCode(500);
+                }
+            }
+        }
+
         [HttpGet]
         [Route("all")]
         public IActionResult GetLibraries()

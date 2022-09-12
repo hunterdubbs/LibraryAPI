@@ -1,5 +1,6 @@
 ﻿using LibraryAPI.DAL;
 using LibraryAPI.Domain;
+using LibraryAPI.Domain.Requests;
 using LibraryAPI.LogicProcessors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -17,10 +18,12 @@ namespace LibraryAPI.Controllers
     [Authorize]
     public class CollectionController : ControllerBase
     {
+        protected ILibraryDataContext libraryDataContext;
         protected CollectionLogicProcessor collectionLogicProcessor;
 
-        public CollectionController(CollectionLogicProcessor collectionLogicProcessor)
+        public CollectionController(ILibraryDataContext libraryDataContext, CollectionLogicProcessor collectionLogicProcessor)
         {
+            this.libraryDataContext = libraryDataContext;
             this.collectionLogicProcessor = collectionLogicProcessor;
         }
 
@@ -39,7 +42,7 @@ namespace LibraryAPI.Controllers
 
             if (!result.Succeeded)
             {
-                if (permissionDenied) return Unauthorized();
+                if (permissionDenied) return Forbid();
                 return StatusCode(500, result.Error);
             }
 
@@ -54,18 +57,107 @@ namespace LibraryAPI.Controllers
             bool permissionDenied = false;
             string userID = ClaimsHelper.GetUserIDFromClaim(User);
 
-            using(UnitOfWork unitOfWork = new UnitOfWork())
+            using (UnitOfWork unitOfWork = new UnitOfWork())
             {
                 result = collectionLogicProcessor.GetCollections(libraryID, userID, out permissionDenied);
             }
 
             if (!result.Succeeded)
             {
-                if (permissionDenied) return Unauthorized();
+                if (permissionDenied) return Forbid();
                 return StatusCode(500, result.Error);
             }
 
             return Ok(result.Value);
+        }
+
+        [HttpPost]
+        [Route("create")]
+        public IActionResult CreateCollection([FromBody] CreateCollectionRequest request)
+        {
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+
+            using (UnitOfWork unitOfWork = new UnitOfWork())
+            {
+                unitOfWork.Begin();
+
+                Collection collection = new Collection()
+                {
+                    LibraryID = request.LibraryID,
+                    ParentCollectionID = request.ParentCollectionID,
+                    Name = request.Name,
+                    Description = request.Description
+                };
+
+                Result result = collectionLogicProcessor.CreateCollection(collection, userID, out bool permissionDenied);
+
+                if (result.Succeeded)
+                {
+                    unitOfWork.Commit();
+                    return Ok();
+                }
+                else
+                {
+                    if (permissionDenied) return Forbid();
+                    return StatusCode(500);
+                }
+            }
+        }
+
+        [HttpPost]
+        [Route("modify")]
+        public IActionResult ModifyCollection([FromBody] ModifyCollectionRequest request)
+        {
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+
+            using (UnitOfWork unitOfWork = new UnitOfWork())
+            {
+                unitOfWork.Begin();
+
+                Collection collection = libraryDataContext.CollectionRepository.GetByID(request.CollectionID);
+                if (collection == null) return BadRequest("Collection not found");
+
+                if (!string.IsNullOrEmpty(request.Name)) collection.Name = request.Name;
+                if (!string.IsNullOrEmpty(request.Description)) collection.Description = request.Description;
+
+                Result result = collectionLogicProcessor.ModifyCollection(collection, userID, out bool permissionDenied);
+
+                if (result.Succeeded)
+                {
+                    unitOfWork.Commit();
+                    return Ok();
+                }
+                else
+                {
+                    if (permissionDenied) return Forbid();
+                    return StatusCode(500);
+                }
+            }
+        }
+
+        [HttpPost]
+        [Route("delete")]
+        public IActionResult DeleteCollection([FromBody] DeleteCollectionRequest request)
+        {
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+
+            using (UnitOfWork unitOfWork = new UnitOfWork())
+            {
+                unitOfWork.Begin();
+
+                Result result = collectionLogicProcessor.DeleteCollection(request.CollectionID, userID, out bool permissionDenied);
+
+                if (result.Succeeded)
+                {
+                    unitOfWork.Commit();
+                    return Ok();
+                }
+                else
+                {
+                    if (permissionDenied) return Forbid();
+                    return StatusCode(500);
+                }
+            }
         }
     }
 }

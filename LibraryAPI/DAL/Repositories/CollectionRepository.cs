@@ -22,8 +22,43 @@ namespace LibraryAPI.DAL.Repositories
 
         public List<Collection> GetAllByLibraryID(int libraryID)
         {
-            DbCommand cmd = CreateCommand(@"SELECT * FROM tCollection");
+            DbCommand cmd = CreateCommand(@"SELECT * FROM tCollection WHERE iLibraryID=@iLibraryID");
+            cmd.Parameters.Add(CreateParameter("@iLibraryID", libraryID));
             return ExtractData(cmd);
+        }
+
+        public void DeleteByLibraryID(int libraryID)
+        {
+            DbCommand cmd = CreateCommand(@"DELETE FROM tCollection WHERE iLibraryID=@iLibraryID");
+            cmd.Parameters.Add(CreateParameter("@iLibraryID", libraryID));
+            cmd.ExecuteNonQuery();
+        }
+
+        public void Delete(int collectionID)
+        {
+            DbCommand cmd = CreateCommand(@"DELETE FROM tCollection WHERE iID=@iID");
+            cmd.Parameters.Add(CreateParameter("@iID", collectionID));
+            cmd.ExecuteNonQuery();
+        }
+
+        public void Add(Collection collection)
+        {
+            DbCommand cmd = CreateCommand(@"INSERT INTO tCollection(iLibraryID, iParentCollectionID, sName, sDescription) VALUES (@iLibraryID, @iParentCollectionID, @sName, @sDescription)");
+            cmd.Parameters.Add(CreateParameter("@iLibraryID", collection.LibraryID));
+            cmd.Parameters.Add(CreateParameter("@iParentCollectionID", collection.ParentCollectionID));
+            cmd.Parameters.Add(CreateParameter("@sName", collection.Name));
+            cmd.Parameters.Add(CreateParameter("@sDescription", collection.Description));
+            cmd.ExecuteNonQuery();
+            collection.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
+        }
+
+        public void Update(Collection collection)
+        {
+            DbCommand cmd = CreateCommand(@"UPDATE tCollection SET sName=@sName, sDescription=@sDescription WHERE iID=@iID");
+            cmd.Parameters.Add(CreateParameter("@sName", collection.Name));
+            cmd.Parameters.Add(CreateParameter("@sDescription", collection.Description));
+            cmd.Parameters.Add(CreateParameter("@iID", collection.ID));
+            cmd.ExecuteNonQuery();
         }
 
         private List<Collection> ExtractData(DbCommand cmd)

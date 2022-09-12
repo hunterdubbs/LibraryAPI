@@ -29,6 +29,19 @@ namespace LibraryAPI.LogicProcessors
             return CheckPermissionOnLibraryID(book.LibraryID, userID, minPermissionLevel);
         }
 
+        public bool CheckPermissionOnCollectionID(int collectionID, string userID, PermissionType minPermissionLevel)
+        {
+            Collection collection = libraryDataContext.CollectionRepository.GetByID(collectionID);
+            if (collection == null) return false;
+
+            return CheckPermissionOnCollection(collection, userID, minPermissionLevel);
+        }
+
+        public bool CheckPermissionOnCollection(Collection collection, string userID, PermissionType minPermissionLevel)
+        {
+            return CheckPermissionOnLibraryID(collection.LibraryID, userID, minPermissionLevel);
+        }
+
         public bool CheckPermissionOnLibrary(Library library, string userID, PermissionType minPermissionLevel)
         {
             return CheckPermissionOnLibraryID(library.ID, userID, minPermissionLevel);
