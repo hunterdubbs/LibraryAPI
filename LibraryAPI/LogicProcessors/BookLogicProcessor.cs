@@ -34,5 +34,23 @@ namespace LibraryAPI.LogicProcessors
             result.Value = book;
             return result;            
         }
+
+        public Result<List<Book>> GetBooksByCollectionID(int collectionID, string userID, out bool permissionDenied)
+        {
+            Result<List<Book>> result = new Result<List<Book>>();
+            permissionDenied = false;
+
+            if(!permissionLogicProcessor.CheckPermissionOnCollectionID(collectionID, userID, Domain.Enum.PermissionType.Viewer))
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have permission to access this library");
+            }
+
+            List<Book> books = libraryDataContext.BookRepository.GetByCollectionID(collectionID);
+            if (books == null) return result;
+
+            result.Value = books;
+            return result;
+        }
     }
 }

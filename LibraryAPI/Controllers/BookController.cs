@@ -49,5 +49,27 @@ namespace LibraryAPI.Controllers
 
             return Ok(result.Value);
         }
+
+        [HttpGet]
+        [Route("collection/{collectionID}")]
+        public IActionResult GetBooksByCollectionID([FromRoute][Required] int collectionID)
+        {
+            Result<List<Book>> result = null;
+            bool permissionDenied = false;
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+
+            using(UnitOfWork uow = new UnitOfWork())
+            {
+                result = bookLogicProcessor.GetBooksByCollectionID(collectionID, userID, out permissionDenied);
+            }
+
+            if (!result.Succeeded)
+            {
+                if (permissionDenied) return Forbid();
+                return StatusCode(500, result.Error);
+            }
+
+            return Ok(result.Value);
+        }
     }
 }
