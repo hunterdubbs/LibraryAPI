@@ -53,7 +53,68 @@ ORDER BY b.iID, bax.iListPosition");
 
         public void Add(Book book)
         {
-            throw new NotImplementedException();
+            DbCommand cmd = CreateCommand(
+@"INSERT INTO tBook
+(
+    iLibraryID,
+    sTitle,
+    sSynopsis,
+    dtAdded,
+    dtPublished
+) VALUES (
+    @iLibraryID,
+    @sTitle,
+    @sSynopsis,
+    @dtAdded,
+    @dtPublished
+)");
+            cmd.Parameters.Add(CreateParameter("@iLibraryID", book.LibraryID));
+            cmd.Parameters.Add(CreateParameter("@sTitle", book.Title));
+            cmd.Parameters.Add(CreateParameter("@sSynopsis", book.Synopsis));
+            cmd.Parameters.Add(CreateParameter("@dtAdded", book.DateAdded));
+            cmd.Parameters.Add(CreateParameter("@dtPublished", book.DatePublished));
+            cmd.ExecuteNonQuery();
+            book.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
+
+            for(int i = 0; i < book.Authors.Count; i++)
+            {
+                DbCommand authorCmd = CreateCommand(@"INSERT INTO tBookAuthorXREF(iBookID, iAuthorID, iListPosition) VALUES (@iBookID, @iAuthorID, @iListPosition");
+                authorCmd.Parameters.Add(CreateParameter("@iBookID", book.ID));
+                authorCmd.Parameters.Add(CreateParameter("@iAuthorID", book.Authors[i].ID));
+                authorCmd.Parameters.Add(CreateParameter("@iListPosition", i));
+                authorCmd.ExecuteNonQuery();
+            }
+        }
+
+        public void Update(Book book)
+        {
+            DbCommand cmd = CreateCommand(
+@"UPDATE tBook SET
+    iLibraryID = @ilibraryID,
+    sTitle = @sTitle,
+    sSynopsis = @sSynopsis,
+    dtAdded = @dtAdded,
+    dtPublished = @dtPublished
+WHERE iBookID = @iBookID");
+            cmd.Parameters.Add(CreateParameter("@iLibraryID", book.LibraryID));
+            cmd.Parameters.Add(CreateParameter("@sTitle", book.Title));
+            cmd.Parameters.Add(CreateParameter("@sSynopsis", book.Synopsis));
+            cmd.Parameters.Add(CreateParameter("@dtAdded", book.DateAdded));
+            cmd.Parameters.Add(CreateParameter("@dtPublished", book.DatePublished));
+            cmd.Parameters.Add(CreateParameter("@iBookID", book.ID));
+
+            DbCommand cleanAuthorsCmd = CreateCommand(@"DELETE FROM tBookAuthorXREF WHERE iBookID=@iBookID");
+            cleanAuthorsCmd.Parameters.Add(CreateParameter("@iBookID", book.ID));
+            cleanAuthorsCmd.ExecuteNonQuery();
+
+            for (int i = 0; i < book.Authors.Count; i++)
+            {
+                DbCommand authorCmd = CreateCommand(@"INSERT INTO tBookAuthorXREF(iBookID, iAuthorID, iListPosition) VALUES (@iBookID, @iAuthorID, @iListPosition");
+                authorCmd.Parameters.Add(CreateParameter("@iBookID", book.ID));
+                authorCmd.Parameters.Add(CreateParameter("@iAuthorID", book.Authors[i].ID));
+                authorCmd.Parameters.Add(CreateParameter("@iListPosition", i));
+                authorCmd.ExecuteNonQuery();
+            }
         }
 
         private List<Book> ExtractData(DbCommand cmd)

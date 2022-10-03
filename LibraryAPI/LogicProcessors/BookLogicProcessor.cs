@@ -52,5 +52,42 @@ namespace LibraryAPI.LogicProcessors
             result.Value = books;
             return result;
         }
+
+        public Result CreateBook(Book book, int? collectionID, string userID, out bool permissionDenied)
+        {
+            Result result = new Result();
+            permissionDenied = false;
+
+            if (!permissionLogicProcessor.CheckPermissionOnLibraryID(book.LibraryID, userID, Domain.Enum.PermissionType.Editor)
+                || !(collectionID != null && permissionLogicProcessor.CheckPermissionOnCollectionID(collectionID.Value, userID, Domain.Enum.PermissionType.Editor))
+                
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have permission to add to this library");
+            }
+
+            libraryDataContext.BookRepository.Add(book);
+            if (collectionID != null) libraryDataContext.CollectionRepository.AddBookToCollection(book.ID, collectionID.Value);
+
+            return result;
+        }
+
+        public Result ModifyBook(Book book, string userID, out bool permissionDenied)
+        {
+            Result result = new Result();
+            permissionDenied = false;
+
+            Book oldBook = libraryDataContext.BookRepository.GetByID(book.ID);
+
+            if(!permissionLogicProcessor.CheckPermissionOnBook(book, userID, Domain.Enum.PermissionType.Editor)
+                || !permissionLogicProcessor.CheckPermissionOnBook(oldBook, userID, Domain.Enum.PermissionType.Editor))
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have permission to modify this book");
+            }
+
+            libraryDataContext.BookRepository.Update(book);
+            return result;
+        }
     }
 }

@@ -61,6 +61,22 @@ namespace LibraryAPI.DAL.Repositories
             cmd.ExecuteNonQuery();
         }
 
+        public void AddBookToCollection(int bookID, int collectionID)
+        {
+            DbCommand cmd = CreateCommand("@INSERT INTO tCollectionBookXREF(iCollectionID, iBookID) VALUES (@iCollectionID, @iBookID)");
+            cmd.Parameters.Add(CreateParameter("@iCollectionID", collectionID));
+            cmd.Parameters.Add(CreateParameter("@iBookID", bookID));
+            cmd.ExecuteNonQuery();
+        }
+
+        public void RemoveBookFromCollection(int bookID, int collectionID)
+        {
+            DbCommand cmd = CreateCommand(@"DELETE FROM tCollectionBookXREF WHERE iBookID=@iBookID AND iCollectionID=@iCollectionID");
+            cmd.Parameters.Add(CreateParameter("@iCollectionID", collectionID));
+            cmd.Parameters.Add(CreateParameter("@iBookID", bookID));
+            cmd.ExecuteNonQuery();
+        }
+
         private List<Collection> ExtractData(DbCommand cmd)
         {
             List<Collection> results = new List<Collection>();
