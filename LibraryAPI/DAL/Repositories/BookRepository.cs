@@ -110,7 +110,7 @@ WHERE iID = @iID");
 
             for (int i = 0; i < book.Authors.Count; i++)
             {
-                DbCommand authorCmd = CreateCommand(@"INSERT INTO tBookAuthorXREF(iBookID, iAuthorID, iListPosition) VALUES (@iBookID, @iAuthorID, @iListPosition");
+                DbCommand authorCmd = CreateCommand(@"INSERT INTO tBookAuthorXREF(iBookID, iAuthorID, iListPosition) VALUES (@iBookID, @iAuthorID, @iListPosition)");
                 authorCmd.Parameters.Add(CreateParameter("@iBookID", book.ID));
                 authorCmd.Parameters.Add(CreateParameter("@iAuthorID", book.Authors[i].ID));
                 authorCmd.Parameters.Add(CreateParameter("@iListPosition", i));

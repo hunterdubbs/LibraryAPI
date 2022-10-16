@@ -50,6 +50,7 @@ namespace LibraryAPI
             LibraryLogicProcessor libraryLogicProcessor = new LibraryLogicProcessor(libraryDataContext, permissionLogicProcessor);
             BookLogicProcessor bookLogicProcessor = new BookLogicProcessor(libraryDataContext, permissionLogicProcessor);
             CollectionLogicProcessor collectionLogicProcessor = new CollectionLogicProcessor(libraryDataContext, permissionLogicProcessor, bookLogicProcessor);
+            AuthorLogicProcessor authorLogicProcessor = new AuthorLogicProcessor(libraryDataContext);
 
             //register
             services.AddSingleton(typeof(ILibraryDataContext), libraryDataContext);
@@ -57,6 +58,7 @@ namespace LibraryAPI
             services.AddSingleton(typeof(LibraryLogicProcessor), libraryLogicProcessor);
             services.AddSingleton(typeof(BookLogicProcessor), bookLogicProcessor);
             services.AddSingleton(typeof(CollectionLogicProcessor), collectionLogicProcessor);
+            services.AddSingleton(typeof(AuthorLogicProcessor), authorLogicProcessor);
 
             services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<IdentityDataContext>().AddDefaultTokenProviders();
             services.AddAuthentication(options =>

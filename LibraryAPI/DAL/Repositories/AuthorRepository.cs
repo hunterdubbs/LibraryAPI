@@ -15,7 +15,11 @@ namespace LibraryAPI.DAL.Repositories
 
         public void Add(Author author)
         {
-            throw new NotImplementedException();
+            DbCommand cmd = CreateCommand(@"INSERT INTO tAuthor(sFirstName, sLastName) VALUES (@sFirstName, @sLastName)");
+            cmd.Parameters.Add(CreateParameter("@sFirstName", author.FirstName));
+            cmd.Parameters.Add(CreateParameter("@sLastName", author.LastName));
+            cmd.ExecuteNonQuery();
+            author.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
         }
 
         public List<Author> GetByBookID(int bookID)
@@ -28,6 +32,27 @@ WHERE x.iBookID=@iBookID
 ORDER BY x.iListPosition");
             cmd.Parameters.Add(CreateParameter("@iBookID", bookID));
             return ExtractData(cmd);
+        }
+
+        public List<Author> GetByFullNamePart(string searchTerm)
+        {
+            DbCommand cmd = CreateCommand(
+@"SELECT *
+FROM tAuthor
+WHERE CONCAT(sFirstName, ' ', sLastName) LIKE @searchTerm");
+            cmd.Parameters.Add(CreateParameter("@searchTerm", '%' + searchTerm + '%'));
+            return ExtractData(cmd);
+        }
+
+        public Author GetByFirstLastName(string firstName, string lastName)
+        {
+            DbCommand cmd = CreateCommand(
+@"SELECT *
+FROM tAuthor
+WHERE UPPER(sFirstName)=@sFirstName AND UPPER(sLastName)=@sLastName");
+            cmd.Parameters.Add(CreateParameter("@sFirstName", firstName.ToUpper()));
+            cmd.Parameters.Add(CreateParameter("@sLastName", lastName.ToUpper()));
+            return ExtractData(cmd).FirstOrDefault();
         }
 
         private List<Author> ExtractData(DbCommand cmd)
