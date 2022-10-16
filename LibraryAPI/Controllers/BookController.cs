@@ -91,7 +91,8 @@ namespace LibraryAPI.Controllers
 
             using(UnitOfWork uow = new UnitOfWork())
             {
-                 Result result = bookLogicProcessor.CreateBook(book, request.CollectionID, userID, out bool permissionDenied);
+                uow.Begin();
+                Result result = bookLogicProcessor.CreateBook(book, request.CollectionID, userID, out bool permissionDenied);
 
                 if (result.Succeeded)
                 {
@@ -113,6 +114,7 @@ namespace LibraryAPI.Controllers
             string userID = ClaimsHelper.GetUserIDFromClaim(User);
             using (UnitOfWork uow = new UnitOfWork())
             {
+                uow.Begin();
                 Book book = libraryDataContext.BookRepository.GetByID(request.BookID);
                 if (book == null) return BadRequest("Book not found");
 
@@ -123,6 +125,31 @@ namespace LibraryAPI.Controllers
                 book.LibraryID = request.LibraryID;
 
                 Result result = bookLogicProcessor.ModifyBook(book, userID, out bool permissionDenied);
+
+                if (result.Succeeded)
+                {
+                    uow.Commit();
+                    return Ok();
+                }
+                else
+                {
+                    if (permissionDenied) return Forbid();
+                    return StatusCode(500);
+                }
+            }
+        }
+
+        [HttpPost]
+        [Route("delete")]
+        public IActionResult DeleteBook([FromBody] DeleteBookRequest request)
+        {
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+
+            using (UnitOfWork uow = new UnitOfWork())
+            {
+                uow.Begin();
+
+                Result result = bookLogicProcessor.DeleteBook(request.BookID, userID, out bool permissionDenied);
 
                 if (result.Succeeded)
                 {

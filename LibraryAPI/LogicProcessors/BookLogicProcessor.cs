@@ -59,7 +59,7 @@ namespace LibraryAPI.LogicProcessors
             permissionDenied = false;
 
             if (!permissionLogicProcessor.CheckPermissionOnLibraryID(book.LibraryID, userID, Domain.Enum.PermissionType.Editor)
-                || !(collectionID != null && permissionLogicProcessor.CheckPermissionOnCollectionID(collectionID.Value, userID, Domain.Enum.PermissionType.Editor))
+                || !(collectionID != null && permissionLogicProcessor.CheckPermissionOnCollectionID(collectionID.Value, userID, Domain.Enum.PermissionType.Editor)))
                 
             {
                 permissionDenied = true;
@@ -87,6 +87,22 @@ namespace LibraryAPI.LogicProcessors
             }
 
             libraryDataContext.BookRepository.Update(book);
+            return result;
+        }
+
+        public Result DeleteBook(int bookID, string userID, out bool permissionDenied)
+        {
+            Result result = new Result();
+            permissionDenied = false;
+
+            if(!permissionLogicProcessor.CheckPermissionOnBookID(bookID, userID, Domain.Enum.PermissionType.Editor))
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have permission to delete this book");
+            }
+
+            libraryDataContext.CollectionRepository.RemoveBookFromAllCollections(bookID);
+            libraryDataContext.BookRepository.Delete(bookID);
             return result;
         }
     }

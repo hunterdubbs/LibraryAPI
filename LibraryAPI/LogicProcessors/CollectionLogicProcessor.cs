@@ -22,15 +22,6 @@ namespace LibraryAPI.LogicProcessors
             this.bookLogicProcessor = bookLogicProcessor;
         }
 
-        public Result AddBookToCollection(int collectionID, int bookID)
-        {
-            Result result = new Result();
-
-
-
-            return result;
-        }
-
         public Result<Collection> GetCollectionWithBooks(int collectionID, string userID, out bool permissionDenied)
         {
             Result<Collection> result = new Result<Collection>();
@@ -47,6 +38,52 @@ namespace LibraryAPI.LogicProcessors
 
             collection.Books = libraryDataContext.BookRepository.GetByCollectionID(collection.ID);
             result.Value = collection;
+            return result;
+        }
+
+        public Result<List<CollectionMembership>> GetCollectionMembershipsByBook(int bookID, string userID, out bool permissionDenied)
+        {
+            Result<List<CollectionMembership>> result = new Result<List<CollectionMembership>>();
+            permissionDenied = false;
+
+            if(!permissionLogicProcessor.CheckPermissionOnBookID(bookID, userID, Domain.Enum.PermissionType.Viewer))
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have permission to view this book");
+            }
+
+            Book book = libraryDataContext.BookRepository.GetByID(bookID);
+            if (book == null) return result.Abort("Book not found");
+
+            result.Value = libraryDataContext.CollectionRepository.GetAllWithMembershipStatusByBookID(bookID, book.LibraryID);
+            return result;
+        }
+
+        public Result UpdateBookCollectionMemberships(int bookID, IEnumerable<int> collections, string userID, out bool permissionDenied)
+        {
+            Result result = new Result();
+            permissionDenied = false;
+
+            if (!permissionLogicProcessor.CheckPermissionOnBookIDAndCollectionIDs(bookID, collections, userID, Domain.Enum.PermissionType.Editor))
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have permission to modify this book");
+            }
+
+            var currentCollections = libraryDataContext.CollectionRepository.GetAllByBookID(bookID).Select(c => c.ID);
+            var collectionsToAdd = collections.Except(currentCollections);
+            var collectionsToRemove = currentCollections.Except(collections);
+
+            foreach(int collectionID in collectionsToAdd)
+            {
+                libraryDataContext.CollectionRepository.AddBookToCollection(bookID, collectionID);
+            }
+
+            foreach(int collectionID in collectionsToRemove)
+            {
+                libraryDataContext.CollectionRepository.RemoveBookFromCollection(bookID, collectionID);
+            }
+
             return result;
         }
 

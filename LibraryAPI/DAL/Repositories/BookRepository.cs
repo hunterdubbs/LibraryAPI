@@ -18,7 +18,7 @@ namespace LibraryAPI.DAL.Repositories
             DbCommand cmd = CreateCommand(
 @"SELECT * 
 FROM tBook b LEFT OUTER JOIN
-tBookAuthorXREF bax ON b.iID=bax.iBookID INNER JOIN
+tBookAuthorXREF bax ON b.iID=bax.iBookID LEFT OUTER JOIN
 tAuthor a ON bax.iAuthorID=a.iID
 WHERE b.iID=@iID
 ORDER BY b.iID, bax.iListPosition");
@@ -32,7 +32,7 @@ ORDER BY b.iID, bax.iListPosition");
 @"SELECT * 
 FROM tBook b INNER JOIN
 tCollectionBookXREF cbx ON b.iID=cbx.iBookID LEFT OUTER JOIN
-tBookAuthorXREF bax ON b.iID=bax.iBookID INNER JOIN
+tBookAuthorXREF bax ON b.iID=bax.iBookID LEFT OUTER JOIN
 tAuthor a ON bax.iAuthorID=a.iID
 WHERE cbx.iCollectionID=@iCollectionID
 ORDER BY b.iID, bax.iListPosition");
@@ -45,7 +45,7 @@ ORDER BY b.iID, bax.iListPosition");
             DbCommand cmd = CreateCommand(
 @"SELECT * 
 FROM tBook b LEFT OUTER JOIN
-tBookAuthorXREF bax ON b.iID=bax.iBookID INNER JOIN
+tBookAuthorXREF bax ON b.iID=bax.iBookID LEFT OUTER JOIN
 tAuthor a ON bax.iAuthorID=a.iID
 ORDER BY b.iID, bax.iListPosition");
             return ExtractFullData(cmd);
@@ -95,13 +95,14 @@ ORDER BY b.iID, bax.iListPosition");
     sSynopsis = @sSynopsis,
     dtAdded = @dtAdded,
     dtPublished = @dtPublished
-WHERE iBookID = @iBookID");
+WHERE iID = @iID");
             cmd.Parameters.Add(CreateParameter("@iLibraryID", book.LibraryID));
             cmd.Parameters.Add(CreateParameter("@sTitle", book.Title));
             cmd.Parameters.Add(CreateParameter("@sSynopsis", book.Synopsis));
             cmd.Parameters.Add(CreateParameter("@dtAdded", book.DateAdded));
             cmd.Parameters.Add(CreateParameter("@dtPublished", book.DatePublished));
-            cmd.Parameters.Add(CreateParameter("@iBookID", book.ID));
+            cmd.Parameters.Add(CreateParameter("@iID", book.ID));
+            cmd.ExecuteNonQuery();
 
             DbCommand cleanAuthorsCmd = CreateCommand(@"DELETE FROM tBookAuthorXREF WHERE iBookID=@iBookID");
             cleanAuthorsCmd.Parameters.Add(CreateParameter("@iBookID", book.ID));
@@ -115,6 +116,17 @@ WHERE iBookID = @iBookID");
                 authorCmd.Parameters.Add(CreateParameter("@iListPosition", i));
                 authorCmd.ExecuteNonQuery();
             }
+        }
+
+        public void Delete(int bookID)
+        {
+            DbCommand authorCmd = CreateCommand(@"DELETE FROM tBookAuthorXREF WHERE iBookID=@iBookID");
+            authorCmd.Parameters.Add(CreateParameter("@iBookID", bookID));
+            authorCmd.ExecuteNonQuery();
+
+            DbCommand bookCmd = CreateCommand(@"DELETE FROM tBook WHERE iID=@iID");
+            bookCmd.Parameters.Add(CreateParameter("@iID", bookID));
+            bookCmd.ExecuteNonQuery();
         }
 
         private List<Book> ExtractData(DbCommand cmd)
@@ -147,7 +159,7 @@ WHERE iBookID = @iBookID");
                 Book book = null;
                 while (reader.Read())
                 {
-                    int nextID = ReadInt(reader, "iBookID");
+                    int nextID = ReadInt(reader, "iID");
                     if(lastID != nextID)
                     {
                         if (book != null) results.Add(book);
@@ -163,6 +175,7 @@ WHERE iBookID = @iBookID");
                     }
                     Author author = new Author();
                     author.ID = ReadInt(reader, "iAuthorID");
+                    if (author.ID == 0) continue;
                     author.FirstName = ReadString(reader, "sFirstName");
                     author.LastName = ReadString(reader, "sLastName");
                     book.Authors.Add(author);

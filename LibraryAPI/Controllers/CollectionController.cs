@@ -159,5 +159,54 @@ namespace LibraryAPI.Controllers
                 }
             }
         }
+
+        [HttpGet]
+        [Route("book/list/{bookID}")]
+        public IActionResult GetCollectionsMembershipsByBook([FromRoute][Required] int bookID)
+        {
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+            bool permissionDenied = false;
+            Result<List<CollectionMembership>> result;
+
+            using(UnitOfWork unitOfWork = new UnitOfWork())
+            {
+                result = collectionLogicProcessor.GetCollectionMembershipsByBook(bookID, userID, out permissionDenied);
+            }
+
+            if (result.Succeeded)
+            {
+                return Ok(result.Value);
+            }
+            else
+            {
+                if (permissionDenied) return Forbid();
+                return StatusCode(500);
+            }
+        }
+
+        [HttpPost]
+        [Route("book")]
+        public IActionResult UpdateBookCollections([FromBody] UpdateBookCollectionsRequest request)
+        {
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+
+            using(UnitOfWork unitOfWork = new UnitOfWork())
+            {
+                unitOfWork.Begin();
+
+                Result result = collectionLogicProcessor.UpdateBookCollectionMemberships(request.BookID, request.CollectionIDs, userID, out bool permissionDenied);
+
+                if (result.Succeeded)
+                {
+                    unitOfWork.Commit();
+                    return Ok();
+                }
+                else
+                {
+                    if (permissionDenied) return Forbid();
+                    return StatusCode(500);
+                }
+            }
+        }
     }
 }

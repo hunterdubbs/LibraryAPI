@@ -52,5 +52,15 @@ namespace LibraryAPI.LogicProcessors
             PermissionType permissionLevel = libraryDataContext.PermissionRepository.GetByUserByLibrary(userID, libraryID);
             return (int)minPermissionLevel <= (int)permissionLevel;
         }
+
+        public bool CheckPermissionOnBookIDAndCollectionIDs(int bookID, IEnumerable<int> collectionIDs, string userID, PermissionType minPermissionLevel)
+        {
+            Book book = libraryDataContext.BookRepository.GetByID(bookID);
+            if (book == null) return false;
+
+            if (!CheckPermissionOnLibraryID(book.LibraryID, userID, minPermissionLevel)) return false;
+            var collectionsInLibrary = libraryDataContext.CollectionRepository.GetAllByLibraryID(book.LibraryID);
+            return !collectionIDs.Except(collectionsInLibrary.Select(c => c.ID)).Any();
+        }
     }
 }

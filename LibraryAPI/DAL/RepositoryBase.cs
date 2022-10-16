@@ -54,5 +54,11 @@ namespace LibraryAPI.DAL
             int ordinal = reader.GetOrdinal(columnName);
             return reader.IsDBNull(ordinal) ? defaultValue : reader.GetDateTime(ordinal);
         }
+
+        protected bool ReadBool(DbDataReader reader, string columnName, bool defaultvalue = false)
+        {
+            int ordinal = reader.GetOrdinal(columnName);
+            return reader.IsDBNull(ordinal) ? defaultvalue : reader.GetBoolean(ordinal);
+        }
     }
 }

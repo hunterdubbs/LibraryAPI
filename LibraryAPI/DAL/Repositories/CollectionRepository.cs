@@ -27,6 +27,17 @@ namespace LibraryAPI.DAL.Repositories
             return ExtractData(cmd);
         }
 
+        public List<Collection> GetAllByBookID(int bookID)
+        {
+            DbCommand cmd = CreateCommand(
+@"SELECT c.* 
+FROM tCollection c INNER JOIN
+tCollectionBookXREF x ON c.iID=x.iCollectionID
+WHERE x.iBookID=@iBookID");
+            cmd.Parameters.Add(CreateParameter("@iBookID", bookID));
+            return ExtractData(cmd);
+        }
+
         public void DeleteByLibraryID(int libraryID)
         {
             DbCommand cmd = CreateCommand(@"DELETE FROM tCollection WHERE iLibraryID=@iLibraryID");
@@ -36,6 +47,10 @@ namespace LibraryAPI.DAL.Repositories
 
         public void Delete(int collectionID)
         {
+            DbCommand xrefCmd = CreateCommand(@"DELETE FROM tCollectionBookXREF WHERE iCollectionID=@iCollectionID");
+            xrefCmd.Parameters.Add(CreateParameter("@iCollectionID", collectionID));
+            xrefCmd.ExecuteNonQuery();
+
             DbCommand cmd = CreateCommand(@"DELETE FROM tCollection WHERE iID=@iID");
             cmd.Parameters.Add(CreateParameter("@iID", collectionID));
             cmd.ExecuteNonQuery();
@@ -63,7 +78,7 @@ namespace LibraryAPI.DAL.Repositories
 
         public void AddBookToCollection(int bookID, int collectionID)
         {
-            DbCommand cmd = CreateCommand("@INSERT INTO tCollectionBookXREF(iCollectionID, iBookID) VALUES (@iCollectionID, @iBookID)");
+            DbCommand cmd = CreateCommand(@"INSERT INTO tCollectionBookXREF(iCollectionID, iBookID) VALUES (@iCollectionID, @iBookID)");
             cmd.Parameters.Add(CreateParameter("@iCollectionID", collectionID));
             cmd.Parameters.Add(CreateParameter("@iBookID", bookID));
             cmd.ExecuteNonQuery();
@@ -75,6 +90,43 @@ namespace LibraryAPI.DAL.Repositories
             cmd.Parameters.Add(CreateParameter("@iCollectionID", collectionID));
             cmd.Parameters.Add(CreateParameter("@iBookID", bookID));
             cmd.ExecuteNonQuery();
+        }
+
+        public void RemoveBookFromAllCollections(int bookID)
+        {
+            DbCommand cmd = CreateCommand(@"DELETE FROM tCollectionBookXREF WHERE iBookID=@iBookID");
+            cmd.Parameters.Add(CreateParameter("@iBookID", bookID));
+            cmd.ExecuteNonQuery();
+        }
+
+        public List<CollectionMembership> GetAllWithMembershipStatusByBookID(int bookID, int libraryID)
+        {
+            DbCommand cmd = CreateCommand(
+@"SELECT c.*, MAX(IF(x.iBookID IS NOT NULL AND x.iBookID=@iBookID, 1, 0)) AS 'bIsMember'
+FROM tCollection c LEFT OUTER JOIN 
+tCollectionBookXREF x ON c.iID=x.iCollectionID 
+WHERE iLibraryID=@iLibraryID
+GROUP BY c.iID, c.iLibraryID, c.iParentCollectionID, c.sName, c.sDescription;");
+            cmd.Parameters.Add(CreateParameter("@iBookID", bookID));
+            cmd.Parameters.Add(CreateParameter("@iLibraryID", libraryID));
+
+            List<CollectionMembership> results = new List<CollectionMembership>();
+            using(DbDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    CollectionMembership result = new CollectionMembership();
+                    result.ID = ReadInt(reader, "iID");
+                    result.LibraryID = ReadInt(reader, "iLibraryID");
+                    result.ParentCollectionID = ReadInt(reader, "iParentCollectionID");
+                    result.Name = ReadString(reader, "sName");
+                    result.Description = ReadString(reader, "sDescription");
+                    result.IsMember = ReadBool(reader, "bIsMember");
+                    results.Add(result);
+                }
+            }
+
+            return results;
         }
 
         private List<Collection> ExtractData(DbCommand cmd)
