@@ -73,3 +73,11 @@ CREATE TABLE tCollectionBookXREF(
 );
 
 
+CREATE TABLE tLibraryInvite(
+	iID INT PRIMARY KEY AUTO_INCREMENT,
+    sInviterID VARCHAR(256) NOT NULL,
+    sRecipientID VARCHAR(256) NOT NULL,
+    dtSent DATETIME,
+    FOREIGN KEY (sInviterID) REFERENCES AspNetUsers (Id),
+    FOREIGN KEY (sRecipientID) REFERENCES AspNetUsers (Id)
+);

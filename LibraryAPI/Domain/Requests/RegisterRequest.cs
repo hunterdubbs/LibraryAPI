@@ -17,7 +17,7 @@ namespace LibraryAPI.Domain.Requests
         [Required]
         public string Email { get; set; }
 
-        [MinLength(8)]
+        [MinLength(6)]
         [MaxLength(40)]
         public string Password { get; set; }
     }
