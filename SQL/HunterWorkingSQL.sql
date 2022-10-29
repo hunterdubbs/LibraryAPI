@@ -75,9 +75,22 @@ CREATE TABLE tCollectionBookXREF(
 
 CREATE TABLE tLibraryInvite(
 	iID INT PRIMARY KEY AUTO_INCREMENT,
+    iLibraryID INT NOT NULL,
     sInviterID VARCHAR(256) NOT NULL,
     sRecipientID VARCHAR(256) NOT NULL,
+    iPermissionLevel INT,
     dtSent DATETIME,
+    FOREIGN KEY (iLibraryID) REFERENCES tLibrary (iID),
     FOREIGN KEY (sInviterID) REFERENCES AspNetUsers (Id),
     FOREIGN KEY (sRecipientID) REFERENCES AspNetUsers (Id)
 );
+
+DROP TABLE tLibraryInvite;
+
+
+SELECT Id, UserName FROM AspNetUsers WHERE UserName LIKE '%h%';
+
+SELECT * FROM tLibrary;
+
+
+SELECT p.*, u.username FROM tPermission p INNER JOIN AspNetUsers u ON p.sUserID=u.Id WHERE p.iLibraryID=1;

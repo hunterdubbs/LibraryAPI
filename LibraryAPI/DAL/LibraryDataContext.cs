@@ -1,9 +1,5 @@
 ﻿using LibraryAPI.DAL.Repositories;
 using LibraryAPI.Domain;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace LibraryAPI.DAL
 {
@@ -14,6 +10,8 @@ namespace LibraryAPI.DAL
         public PermissionRepository PermissionRepository { get; protected set; }
         public AuthorRepository AuthorRepository { get; protected set; }
         public CollectionRepository CollectionRepository { get; protected set; }
+        public UserRepository UserRepository { get; protected set; }
+        public InviteRepository InviteRepository { get; protected set; }
 
         public LibraryDataContext()
         {
@@ -22,6 +20,8 @@ namespace LibraryAPI.DAL
             PermissionRepository = new PermissionRepository();
             AuthorRepository = new AuthorRepository();
             CollectionRepository = new CollectionRepository();
+            UserRepository = new UserRepository();
+            InviteRepository = new InviteRepository();
         }
 
         public LibraryDataContext(UnitOfWork unitOfWork)
@@ -31,6 +31,8 @@ namespace LibraryAPI.DAL
             PermissionRepository = new PermissionRepository(unitOfWork);
             AuthorRepository = new AuthorRepository(unitOfWork);
             CollectionRepository = new CollectionRepository(unitOfWork);
+            UserRepository = new UserRepository(unitOfWork);
+            InviteRepository = new InviteRepository(unitOfWork);
         }
     }
 }

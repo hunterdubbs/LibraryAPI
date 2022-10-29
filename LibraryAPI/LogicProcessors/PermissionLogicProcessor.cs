@@ -1,5 +1,6 @@
 ﻿using LibraryAPI.Domain;
 using LibraryAPI.Domain.Enum;
+using LibraryAPI.Domain.Responses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -61,6 +62,48 @@ namespace LibraryAPI.LogicProcessors
             if (!CheckPermissionOnLibraryID(book.LibraryID, userID, minPermissionLevel)) return false;
             var collectionsInLibrary = libraryDataContext.CollectionRepository.GetAllByLibraryID(book.LibraryID);
             return !collectionIDs.Except(collectionsInLibrary.Select(c => c.ID)).Any();
+        }
+
+        public Result<LibraryPermissionResponse> GetLibraryPermissions(int libraryID, string userID, out bool permissionDenied)
+        {
+            Result<LibraryPermissionResponse> result = new Result<LibraryPermissionResponse>();
+            permissionDenied = false;
+
+            var permissions = libraryDataContext.PermissionRepository.GetAllByLibrary(libraryID);
+            if (!permissions.Any(p => p.PermissionLevel == PermissionType.Owner && p.UserID == userID))
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have the required permission for this library");
+            }
+            var invites = libraryDataContext.InviteRepository.GetAllByLibrary(libraryID);
+
+            result.Value = new LibraryPermissionResponse()
+            {
+                Permissions = permissions,
+                Invites = invites
+            };
+            return result;
+        }
+
+        public Result CreateInvite(Invite invite, string userID, out bool permissionDenied)
+        {
+            Result result = new Result();
+            permissionDenied = false;
+
+            if(!CheckPermissionOnLibraryID(invite.LibraryID, userID, PermissionType.Owner))
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have permission to invite others to this library");
+            }
+
+            var existingInvites = libraryDataContext.InviteRepository.GetAllByLibrary(invite.LibraryID);
+            if(existingInvites.Any(i => i.RecipientID == invite.RecipientID))
+            {
+                return result.Abort("User already invited");
+            }
+
+            libraryDataContext.InviteRepository.Add(invite);
+            return result;
         }
     }
 }

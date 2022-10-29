@@ -1,8 +1,4 @@
 ﻿using LibraryAPI.DAL.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace LibraryAPI.Domain
 {
@@ -13,5 +9,7 @@ namespace LibraryAPI.Domain
         PermissionRepository PermissionRepository { get; }
         AuthorRepository AuthorRepository { get; }
         CollectionRepository CollectionRepository { get; }
+        UserRepository UserRepository { get; }
+        InviteRepository InviteRepository { get; }
     }
 }

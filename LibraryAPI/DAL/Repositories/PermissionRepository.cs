@@ -1,4 +1,5 @@
-﻿using LibraryAPI.Domain.Enum;
+﻿using LibraryAPI.Domain;
+using LibraryAPI.Domain.Enum;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -36,6 +37,28 @@ namespace LibraryAPI.DAL.Repositories
             cmd.Parameters.Add(CreateParameter("@iLibraryID", libraryId));
             cmd.Parameters.Add(CreateParameter("@sUserID", userId));
             cmd.ExecuteNonQuery();
+        }
+
+        public List<LibraryPermission> GetAllByLibrary(int libraryID)
+        {
+            List<LibraryPermission> results = new List<LibraryPermission>();
+            DbCommand cmd = CreateCommand(@"SELECT p.*, u.username FROM tPermission p INNER JOIN AspNetUsers u ON p.sUserID=u.Id WHERE p.iLibraryID=@iLibraryID");
+            cmd.Parameters.Add(CreateParameter("@iLibraryID", libraryID));
+
+            using(DbDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    LibraryPermission result = new LibraryPermission();
+                    result.UserID = ReadString(reader, "sUserID");
+                    result.Username = ReadString(reader, "username");
+                    result.PermissionLevel = (PermissionType)ReadInt(reader, "iPermissionLevel");
+                    result.IsInvite = false;
+                    results.Add(result);
+                }
+            }
+
+            return results;
         }
 
         private PermissionType ExtractData(DbCommand cmd)
