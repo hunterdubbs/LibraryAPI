@@ -122,5 +122,30 @@ namespace LibraryAPI.Controllers
 
             return Ok(results);
         }
+
+        [HttpDelete]
+        [Route("leave/{libraryID}")]
+        public IActionResult LeaveLibrary([FromRoute] int libraryID)
+        {
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+            Result result;
+
+            using(UnitOfWork unitOfWork = new UnitOfWork())
+            {
+                unitOfWork.Begin();
+
+                result = libraryLogicProcessor.LeaveLibrary(libraryID, userID);
+
+                if (result.Succeeded)
+                {
+                    unitOfWork.Commit();
+                    return Ok();
+                }
+                else
+                {
+                    return BadRequest(result.Error);
+                }
+            }
+        }
     }
 }

@@ -85,6 +85,21 @@ namespace LibraryAPI.LogicProcessors
             return result;
         }
 
+        public Result RemoveLibraryPermission(int libraryID, string targetUserID, string userID, out bool permissionDenied)
+        {
+            Result result = new Result();
+            permissionDenied = false;
+
+            if(!CheckPermissionOnLibraryID(libraryID, userID, PermissionType.Owner))
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have permission to remove users from this library");
+            }
+
+            libraryDataContext.PermissionRepository.Delete(targetUserID, libraryID);
+            return result;
+        }
+
         public Result CreateInvite(Invite invite, string userID, out bool permissionDenied)
         {
             Result result = new Result();
@@ -103,6 +118,61 @@ namespace LibraryAPI.LogicProcessors
             }
 
             libraryDataContext.InviteRepository.Add(invite);
+            return result;
+        }
+
+        public Result DeleteInvite(int inviteID, string userID, out bool permissionDenied)
+        {
+            Result result = new Result();
+            permissionDenied = false;
+
+            Invite invite = libraryDataContext.InviteRepository.GetByID(inviteID);
+            if (invite == null) return result.Abort("Invite not found");
+
+            if(!CheckPermissionOnLibraryID(invite.LibraryID, userID, PermissionType.Owner))
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have permission to delete this invite");
+            }
+
+            libraryDataContext.InviteRepository.Delete(invite.ID);
+            return result;
+        }
+
+        public Result RejectInvite(int inviteID, string userID, out bool permissionDenied)
+        {
+            Result result = new Result();
+            permissionDenied = false;
+
+            Invite invite = libraryDataContext.InviteRepository.GetByID(inviteID);
+            if (invite == null) return result.Abort("Invite not found");
+
+            if(invite.RecipientID != userID)
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have permission to reject this invite");
+            }
+
+            libraryDataContext.InviteRepository.Delete(invite.ID);
+            return result;
+        }
+
+        public Result AcceptInvite(int inviteID, string userID, out bool permissionDenied)
+        {
+            Result result = new Result();
+            permissionDenied = false;
+
+            Invite invite = libraryDataContext.InviteRepository.GetByID(inviteID);
+            if (invite == null) return result.Abort("Invite not found");
+
+            if (invite.RecipientID != userID)
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have permission to reject this invite");
+            }
+
+            libraryDataContext.PermissionRepository.Add(userID, invite.LibraryID, invite.PermissionLevel);
+            libraryDataContext.InviteRepository.Delete(invite.ID);
             return result;
         }
     }

@@ -17,19 +17,21 @@ namespace LibraryAPI.DAL.Repositories
 
         public void Add(Library library)
         {
-            DbCommand cmd = CreateCommand(@"INSERT INTO tLibrary(sName, sOwner, dtCreated) VALUES (@sName, @sOwner, @dtCreated)");
+            DbCommand cmd = CreateCommand(@"INSERT INTO tLibrary(sName, sOwner, dtCreated, iDefaultCollectionID) VALUES (@sName, @sOwner, @dtCreated, @iDefaultCollectionID)");
             cmd.Parameters.Add(CreateParameter("@sName", library.Name));
             cmd.Parameters.Add(CreateParameter("@sOwner", library.Owner));
             cmd.Parameters.Add(CreateParameter("@dtCreated", DateTime.Now));
+            cmd.Parameters.Add(CreateParameter("@iDefaultCollectionID", library.DefaultCollectionID));
             cmd.ExecuteNonQuery();
             library.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
         }
 
         public void Update(Library library)
         {
-            DbCommand cmd = CreateCommand(@"UPDATE tLibrary SET sName=@sName WHERE iID=@iID");
+            DbCommand cmd = CreateCommand(@"UPDATE tLibrary SET sName=@sName, iDefaultCollectionID=@iDefaultCollectionID WHERE iID=@iID");
             cmd.Parameters.Add(CreateParameter("@sName", library.Name));
             cmd.Parameters.Add(CreateParameter("@iID", library.ID));
+            cmd.Parameters.Add(CreateParameter("@iDefaultCollectionID", library.DefaultCollectionID));
             cmd.ExecuteNonQuery();
         }
 
@@ -54,6 +56,13 @@ namespace LibraryAPI.DAL.Repositories
             return ExtractData(cmd).FirstOrDefault();
         }
 
+        public Library GetByBookID(int bookID)
+        {
+            DbCommand cmd = CreateCommand(@"SELECT l.*, p.iPermissionLevel FROM tBook b INNER JOIN tLibrary l ON b.iLibraryID=l.iID INNER JOIN tPermission p ON l.iID=p.iLibraryID WHERE b.iID=@iID AND p.iPermissionLevel > 0");
+            cmd.Parameters.Add(CreateParameter("@iID", bookID));
+            return ExtractData(cmd).FirstOrDefault();
+        }
+
         private List<Library> ExtractData(DbCommand cmd)
         {
             List<Library> results = new List<Library>();
@@ -67,6 +76,7 @@ namespace LibraryAPI.DAL.Repositories
                     result.Owner = ReadString(reader, "sOwner");
                     result.CreatedDate = ReadDateTime(reader, "dtCreated");
                     result.Permissions = (PermissionType)ReadInt(reader, "iPermissionLevel");
+                    result.DefaultCollectionID = ReadInt(reader, "iDefaultCollectionID");
                     results.Add(result);
                 }
             }

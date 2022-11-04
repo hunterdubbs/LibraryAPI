@@ -1,8 +1,5 @@
 ﻿using LibraryAPI.Domain.Enum;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace LibraryAPI.Domain
 {
@@ -13,5 +10,6 @@ namespace LibraryAPI.Domain
         public string Owner { get; set; }
         public DateTime CreatedDate { get; set; }
         public PermissionType Permissions { get; set; }
+        public int DefaultCollectionID { get; set; }
     }
 }

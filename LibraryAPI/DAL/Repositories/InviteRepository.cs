@@ -2,6 +2,7 @@
 using LibraryAPI.Domain.Enum;
 using System.Collections.Generic;
 using System.Data.Common;
+using System.Linq;
 
 namespace LibraryAPI.DAL.Repositories
 {
@@ -44,6 +45,13 @@ namespace LibraryAPI.DAL.Repositories
             return ExtractData(cmd);
         }
 
+        public Invite GetByID(int id)
+        {
+            DbCommand cmd = CreateCommand(@"SELECT i.*, s.UserName as 'sInviterUsername', r.UserName as 'sRecipientUsername', l.sName as 'sLibraryName' FROM tLibraryInvite i INNER JOIN AspNetUsers s ON i.sInviterID=s.Id INNER JOIN AspNetUsers r ON i.sRecipientID=r.Id INNER JOIN tLibrary l on i.iLibraryID=l.iID WHERE i.iID=@iID");
+            cmd.Parameters.Add(CreateParameter("@iID", id));
+            return ExtractData(cmd).FirstOrDefault();
+        }
+
         private List<Invite> ExtractData(DbCommand cmd)
         {
             List<Invite> results = new List<Invite>();
@@ -53,7 +61,7 @@ namespace LibraryAPI.DAL.Repositories
                 {
                     Invite result = new Invite();
                     result.ID = ReadInt(reader, "iID");
-                    result.LibraryID = ReadInt(reader, "iID");
+                    result.LibraryID = ReadInt(reader, "iLibraryID");
                     result.InviterID = ReadString(reader, "sInviterID");
                     result.RecipientID = ReadString(reader, "sRecipientID");
                     result.PermissionLevel = (PermissionType)ReadInt(reader, "iPermissionLevel");

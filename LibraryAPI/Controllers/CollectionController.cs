@@ -86,7 +86,8 @@ namespace LibraryAPI.Controllers
                     LibraryID = request.LibraryID,
                     ParentCollectionID = request.ParentCollectionID,
                     Name = request.Name,
-                    Description = request.Description
+                    Description = request.Description,
+                    IsUserModifiable = true
                 };
 
                 Result result = collectionLogicProcessor.CreateCollection(collection, userID, out bool permissionDenied);
@@ -155,7 +156,7 @@ namespace LibraryAPI.Controllers
                 else
                 {
                     if (permissionDenied) return Forbid();
-                    return StatusCode(500);
+                    return BadRequest(result.Error);
                 }
             }
         }

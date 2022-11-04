@@ -21,6 +21,19 @@ namespace LibraryAPI.LogicProcessors
         {
             libraryDataContext.LibraryRepository.Add(library);
             libraryDataContext.PermissionRepository.Add(userID, library.ID, Domain.Enum.PermissionType.Owner);
+
+            Collection defaultCollection = new Collection()
+            {
+                Name = "Main Collection",
+                Description = "Default Collection that contains all books in your library",
+                IsUserModifiable = false,
+                LibraryID = library.ID,
+                ParentCollectionID = 0,
+            };
+            libraryDataContext.CollectionRepository.Add(defaultCollection);
+            library.DefaultCollectionID = defaultCollection.ID;
+            libraryDataContext.LibraryRepository.Update(library);
+
             return new Result();
         }
 
@@ -50,9 +63,17 @@ namespace LibraryAPI.LogicProcessors
                 return result.Abort("You do not have permission to delete this library");
             }
 
-            libraryDataContext.PermissionRepository.Delete(userID, libraryID);
+            libraryDataContext.PermissionRepository.DeleteByLibraryID(libraryID);
             libraryDataContext.CollectionRepository.DeleteByLibraryID(libraryID);
             libraryDataContext.LibraryRepository.Delete(libraryID);
+            return result;
+        }
+
+        public Result LeaveLibrary(int libraryID, string userID)
+        {
+            Result result = new Result();
+
+            libraryDataContext.PermissionRepository.Delete(userID, libraryID);
             return result;
         }
     }

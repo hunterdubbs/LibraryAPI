@@ -49,6 +49,31 @@ namespace LibraryAPI.Controllers
             return Ok(result.Value);
         }
 
+        [HttpPost]
+        [Route("remove")]
+        public IActionResult RemovePermissionOnLibrary([FromBody] RemovePermissionRequest request)
+        {
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+
+            using (UnitOfWork uow = new UnitOfWork())
+            {
+                uow.Begin();
+
+                Result result = permissionLogicProcessor.RemoveLibraryPermission(request.LibraryID, request.UserID, userID, out bool permissionDenied);
+
+                if (result.Succeeded)
+                {
+                    uow.Commit();
+                    return Ok();
+                }
+                else
+                {
+                    if (permissionDenied) return Forbid();
+                    return BadRequest(result.Error);
+                }
+            }
+        }
+
         [HttpGet]
         [Route("user/search")]
         public IActionResult SearchUsers([FromQuery] string searchTerm)
@@ -114,6 +139,80 @@ namespace LibraryAPI.Controllers
             }
 
             return Ok(result.Value);
+        }
+
+        [HttpDelete]
+        [Route("invite/{inviteID}")]
+        public IActionResult DeleteInvite([FromRoute] int inviteID)
+        {
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+
+            using(UnitOfWork uow = new UnitOfWork())
+            {
+                uow.Begin();
+
+                Result result = permissionLogicProcessor.DeleteInvite(inviteID, userID, out bool permissionDenied);
+
+                if (result.Succeeded)
+                {
+                    uow.Commit();
+                    return Ok();
+                }
+                else
+                {
+                    if (permissionDenied) return Forbid();
+                    return BadRequest(result.Error);
+                }
+            }
+        }
+
+        [HttpPost]
+        [Route("invite/{inviteID}/accept")]
+        public IActionResult AcceptInvite([FromRoute] int inviteID)
+        {
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+
+            using(UnitOfWork uow = new UnitOfWork()){
+                uow.Begin();
+
+                Result result = permissionLogicProcessor.AcceptInvite(inviteID, userID, out bool permissionDenied);
+
+                if (result.Succeeded)
+                {
+                    uow.Commit();
+                    return Ok();
+                }
+                else
+                {
+                    if (permissionDenied) return Forbid();
+                    return BadRequest(result.Error);
+                }
+            }
+        }
+
+        [HttpPost]
+        [Route("invite/{inviteID}/reject")]
+        public IActionResult Reject([FromRoute] int inviteID)
+        {
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+
+            using (UnitOfWork uow = new UnitOfWork())
+            {
+                uow.Begin();
+
+                Result result = permissionLogicProcessor.RejectInvite(inviteID, userID, out bool permissionDenied);
+
+                if (result.Succeeded)
+                {
+                    uow.Commit();
+                    return Ok();
+                }
+                else
+                {
+                    if (permissionDenied) return Forbid();
+                    return BadRequest(result.Error);
+                }
+            }
         }
     }
 }

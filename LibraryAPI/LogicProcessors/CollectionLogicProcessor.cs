@@ -70,6 +70,8 @@ namespace LibraryAPI.LogicProcessors
                 return result.Abort("You do not have permission to modify this book");
             }
 
+            Library library = libraryDataContext.LibraryRepository.GetByBookID(bookID);
+
             var currentCollections = libraryDataContext.CollectionRepository.GetAllByBookID(bookID).Select(c => c.ID);
             var collectionsToAdd = collections.Except(currentCollections);
             var collectionsToRemove = currentCollections.Except(collections);
@@ -81,7 +83,7 @@ namespace LibraryAPI.LogicProcessors
 
             foreach(int collectionID in collectionsToRemove)
             {
-                libraryDataContext.CollectionRepository.RemoveBookFromCollection(bookID, collectionID);
+                if(collectionID != library.DefaultCollectionID) libraryDataContext.CollectionRepository.RemoveBookFromCollection(bookID, collectionID);
             }
 
             return result;
@@ -142,6 +144,10 @@ namespace LibraryAPI.LogicProcessors
                 permissionDenied = true;
                 return result.Abort("You do not have permission to add to this library");
             }
+
+            Collection collection = libraryDataContext.CollectionRepository.GetByID(collectionID);
+            if (collection == null) return result.Abort("Collection not found");
+            if (!collection.IsUserModifiable) return result.Abort("Cannot delete default collection");
 
             libraryDataContext.CollectionRepository.Delete(collectionID);
             return result;

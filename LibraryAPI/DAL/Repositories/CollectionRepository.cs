@@ -58,11 +58,12 @@ WHERE x.iBookID=@iBookID");
 
         public void Add(Collection collection)
         {
-            DbCommand cmd = CreateCommand(@"INSERT INTO tCollection(iLibraryID, iParentCollectionID, sName, sDescription) VALUES (@iLibraryID, @iParentCollectionID, @sName, @sDescription)");
+            DbCommand cmd = CreateCommand(@"INSERT INTO tCollection(iLibraryID, iParentCollectionID, sName, sDescription, bUserModifiable) VALUES (@iLibraryID, @iParentCollectionID, @sName, @sDescription, @bUserModifiable)");
             cmd.Parameters.Add(CreateParameter("@iLibraryID", collection.LibraryID));
             cmd.Parameters.Add(CreateParameter("@iParentCollectionID", collection.ParentCollectionID));
             cmd.Parameters.Add(CreateParameter("@sName", collection.Name));
             cmd.Parameters.Add(CreateParameter("@sDescription", collection.Description));
+            cmd.Parameters.Add(CreateParameter("@bUserModifiable", collection.IsUserModifiable));
             cmd.ExecuteNonQuery();
             collection.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
         }
@@ -121,6 +122,7 @@ GROUP BY c.iID, c.iLibraryID, c.iParentCollectionID, c.sName, c.sDescription;");
                     result.ParentCollectionID = ReadInt(reader, "iParentCollectionID");
                     result.Name = ReadString(reader, "sName");
                     result.Description = ReadString(reader, "sDescription");
+                    result.IsUserModifiable = ReadBool(reader, "bUserModifiable");
                     result.IsMember = ReadBool(reader, "bIsMember");
                     results.Add(result);
                 }
@@ -142,6 +144,7 @@ GROUP BY c.iID, c.iLibraryID, c.iParentCollectionID, c.sName, c.sDescription;");
                     result.ParentCollectionID = ReadInt(reader, "iParentCollectionID");
                     result.Name = ReadString(reader, "sName");
                     result.Description = ReadString(reader, "sDescription");
+                    result.IsUserModifiable = ReadBool(reader, "bUserModifiable");
                     results.Add(result);
                 }
             }

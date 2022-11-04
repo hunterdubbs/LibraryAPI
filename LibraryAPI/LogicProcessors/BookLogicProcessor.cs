@@ -69,6 +69,9 @@ namespace LibraryAPI.LogicProcessors
             libraryDataContext.BookRepository.Add(book);
             if (collectionID != null) libraryDataContext.CollectionRepository.AddBookToCollection(book.ID, collectionID.Value);
 
+            Library library = libraryDataContext.LibraryRepository.GetByID(book.LibraryID);
+            if (collectionID == null || collectionID.Value != library.DefaultCollectionID) libraryDataContext.CollectionRepository.AddBookToCollection(book.ID, library.DefaultCollectionID);
+
             return result;
         }
 

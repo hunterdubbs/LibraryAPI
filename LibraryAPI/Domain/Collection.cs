@@ -13,5 +13,6 @@ namespace LibraryAPI.Domain
         public string Name { get; set; }
         public string Description { get; set; }
         public List<Book> Books { get; set; }
+        public bool IsUserModifiable { get; set; }
     }
 }
