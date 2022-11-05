@@ -178,7 +178,6 @@ namespace LibraryAPI.Controllers
         }
 
         [HttpGet]
-        [Authorize]
         [Route("test")]
         public IActionResult Test()
         {
