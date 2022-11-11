@@ -25,7 +25,6 @@ namespace LibraryAPI
                 .ConfigureAppConfiguration(builder =>
                 {
                     builder.AddUserSecrets<Program>();
-                    builder.AddEnvironmentVariables();
                 });
     }
 }

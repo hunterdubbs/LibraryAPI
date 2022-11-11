@@ -1,6 +1,7 @@
 using LibraryAPI.DAL;
 using LibraryAPI.Domain;
 using LibraryAPI.LogicProcessors;
+using LibraryAPI.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -28,6 +29,10 @@ namespace LibraryAPI
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            Configuration["ConnectionString"] = Environment.GetEnvironmentVariable("ConnectionString") ?? Configuration["ConnectionString"];
+            Configuration["JwtSecretKey"] = Environment.GetEnvironmentVariable("JwtSecretKey") ?? Configuration["JwtSecretKey"];
+            Configuration["EmailUsername"] = Environment.GetEnvironmentVariable("EmailUsername") ?? Configuration["EmailUsername"];
+            Configuration["EmailPassword"] = Environment.GetEnvironmentVariable("EmailPassword") ?? Configuration["EmailPassword"];
 
             GlobalSettings.ConnectionString = Configuration["ConnectionString"];
             GlobalSettings.DbProviderFactory = MySqlConnectorFactory.Instance;
@@ -38,7 +43,6 @@ namespace LibraryAPI
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddControllers();
             services.AddDbContext<IdentityDataContext>(options => options.UseMySQL(Configuration["ConnectionString"]));
 
@@ -52,15 +56,24 @@ namespace LibraryAPI
             CollectionLogicProcessor collectionLogicProcessor = new CollectionLogicProcessor(libraryDataContext, permissionLogicProcessor, bookLogicProcessor);
             AuthorLogicProcessor authorLogicProcessor = new AuthorLogicProcessor(libraryDataContext);
 
+            //configure services
+            IEmailService emailService = new EmailService(Configuration["EmailUsername"], Configuration["EmailPassword"]);
+
             //register
             services.AddSingleton(typeof(ILibraryDataContext), libraryDataContext);
+            services.AddSingleton(typeof(IEmailService), emailService);
             services.AddSingleton(typeof(PermissionLogicProcessor), permissionLogicProcessor);
             services.AddSingleton(typeof(LibraryLogicProcessor), libraryLogicProcessor);
             services.AddSingleton(typeof(BookLogicProcessor), bookLogicProcessor);
             services.AddSingleton(typeof(CollectionLogicProcessor), collectionLogicProcessor);
             services.AddSingleton(typeof(AuthorLogicProcessor), authorLogicProcessor);
 
-            services.AddIdentity<ApplicationUser, IdentityRole>().AddEntityFrameworkStores<IdentityDataContext>().AddDefaultTokenProviders();
+            services.AddIdentity<ApplicationUser, IdentityRole>(options => {
+                options.Tokens.PasswordResetTokenProvider = nameof(SimpleTokenProvider);
+            })
+                .AddEntityFrameworkStores<IdentityDataContext>()
+                .AddDefaultTokenProviders()
+                .AddTokenProvider(nameof(SimpleTokenProvider), typeof(SimpleTokenProvider));
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -74,7 +87,7 @@ namespace LibraryAPI
                 {
                     ValidateIssuer = true,
                     ValidIssuer = Configuration["BaseURL"], //TODO: enable in prod
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JWT-SECRET-KEY"])),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["JwtSecretKey"])),
                     ValidateAudience = false
                 };
             });

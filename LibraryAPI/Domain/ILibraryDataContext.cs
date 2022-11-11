@@ -11,5 +11,7 @@ namespace LibraryAPI.Domain
         CollectionRepository CollectionRepository { get; }
         UserRepository UserRepository { get; }
         InviteRepository InviteRepository { get; }
+        PasswordResetCodeRepository PasswordResetCodeRepository { get; }
+        EmailVerificationCodeRepository EmailVerificationCodeRepository { get; }
     }
 }
