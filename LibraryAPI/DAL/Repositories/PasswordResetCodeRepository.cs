@@ -13,7 +13,7 @@ namespace LibraryAPI.DAL.Repositories
 
         public void Add(PasswordResetCode code)
         {
-            DbCommand cmd = CreateCommand(@"INSERT INTO tPasswordResetCodes(sUserID, sHash, sSalt, dtExpires) VALUES (@sUserID, @sHash, @sSalt, @dtExpires");
+            DbCommand cmd = CreateCommand(@"INSERT INTO tPasswordResetCodes(sUserID, sHash, sSalt, dtExpires) VALUES (@sUserID, @sHash, @sSalt, @dtExpires)");
             cmd.Parameters.Add(CreateParameter("@sUserID", code.UserID));
             cmd.Parameters.Add(CreateParameter("@sHash", code.Hash));
             cmd.Parameters.Add(CreateParameter("@sSalt", code.Salt));
@@ -33,6 +33,13 @@ namespace LibraryAPI.DAL.Repositories
         {
             DbCommand cmd = CreateCommand(@"DELETE FROM tPasswordResetCodes WHERE dtExpires<@dtExpires");
             cmd.Parameters.Add(CreateParameter("@dtExpires", DateTime.Now));
+            cmd.ExecuteNonQuery();
+        }
+
+        public void DeleteByUserID(string userID)
+        {
+            DbCommand cmd = CreateCommand(@"DELETE FROM tPasswordResetCodes WHERE sUserID=@sUserID");
+            cmd.Parameters.Add(CreateParameter("@sUserID", userID));
             cmd.ExecuteNonQuery();
         }
 

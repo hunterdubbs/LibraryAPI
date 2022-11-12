@@ -56,6 +56,17 @@ WHERE x.iBookID=@iBookID");
             cmd.ExecuteNonQuery();
         }
 
+        public void DeleteByUserID(string userID)
+        {
+            DbCommand cmd = CreateCommand(@"DELETE FROM tCollection WHERE iLibraryID IN
+(SELECT l.iID
+FROM tLibrary l
+INNER JOIN tPermission p ON l.iID=p.iLibraryID
+WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
+            cmd.Parameters.Add(CreateParameter("@sUserID", userID));
+            cmd.ExecuteNonQuery();
+        }
+
         public void Add(Collection collection)
         {
             DbCommand cmd = CreateCommand(@"INSERT INTO tCollection(iLibraryID, iParentCollectionID, sName, sDescription, bUserModifiable) VALUES (@iLibraryID, @iParentCollectionID, @sName, @sDescription, @bUserModifiable)");

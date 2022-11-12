@@ -124,8 +124,41 @@ WHERE iID = @iID");
             authorCmd.Parameters.Add(CreateParameter("@iBookID", bookID));
             authorCmd.ExecuteNonQuery();
 
+            DbCommand collectionMembershipCmd = CreateCommand(@"DELETE FROM tCollectionBookXREF WHERE iBookID=@iBookID");
+            collectionMembershipCmd.Parameters.Add(CreateParameter("@iBookID", bookID));
+            collectionMembershipCmd.ExecuteNonQuery();
+
             DbCommand bookCmd = CreateCommand(@"DELETE FROM tBook WHERE iID=@iID");
             bookCmd.Parameters.Add(CreateParameter("@iID", bookID));
+            bookCmd.ExecuteNonQuery();
+        }
+
+        public void DeleteByUserID(string userID)
+        {
+            DbCommand authorCmd = CreateCommand(@"DELETE FROM tBookAuthorXREF WHERE iBookID IN
+(SELECT b.iID
+FROM tBook b
+INNER JOIN tLibrary l ON b.iLibraryID=l.iID
+INNER JOIN tPermission p ON l.iID=p.iLibraryID
+WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
+            authorCmd.Parameters.Add(CreateParameter("@sUserID", userID));
+            authorCmd.ExecuteNonQuery();
+
+            DbCommand collectionMembershipCmd = CreateCommand(@"DELETE FROM tCollectionBookXREF WHERE iBookID IN
+(SELECT b.iID
+FROM tBook b
+INNER JOIN tLibrary l ON b.iLibraryID=l.iID
+INNER JOIN tPermission p ON l.iID=p.iLibraryID
+WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
+            collectionMembershipCmd.Parameters.Add(CreateParameter("@sUserID", userID));
+            collectionMembershipCmd.ExecuteNonQuery();
+
+            DbCommand bookCmd = CreateCommand(@"DELETE FROM tBook WHERE iLibraryID IN
+(SELECT l.iID
+FROM tLibrary l
+INNER JOIN tPermission p ON l.iID=p.iLibraryID
+WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
+            bookCmd.Parameters.Add(CreateParameter("@sUserID", userID));
             bookCmd.ExecuteNonQuery();
         }
 

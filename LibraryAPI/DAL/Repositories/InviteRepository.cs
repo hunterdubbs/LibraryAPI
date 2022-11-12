@@ -31,6 +31,13 @@ namespace LibraryAPI.DAL.Repositories
             cmd.ExecuteNonQuery();
         }
 
+        public void DeleteByUserID(string userID)
+        {
+            DbCommand cmd = CreateCommand(@"DELETE FROM tLibraryInvite WHERE sInviterID=@sUserID OR sRecipientID=@sUserID");
+            cmd.Parameters.Add(CreateParameter("@sUserID", userID));
+            cmd.ExecuteNonQuery();
+        }
+
         public List<Invite> GetAllByRecipient(string recipientID)
         {
             DbCommand cmd = CreateCommand(@"SELECT i.*, s.UserName as 'sInviterUsername', r.UserName as 'sRecipientUsername', l.sName as 'sLibraryName' FROM tLibraryInvite i INNER JOIN AspNetUsers s ON i.sInviterID=s.Id INNER JOIN AspNetUsers r ON i.sRecipientID=r.Id INNER JOIN tLibrary l on i.iLibraryID=l.iID WHERE i.sRecipientID=@sRecipientID");

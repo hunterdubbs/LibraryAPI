@@ -260,7 +260,7 @@ Use the code below in the app to confirm your email and activate your account
             emailService.SendEmail(user.Email, "Password Reset",
                 @"Use the below code to reset your account password in the app.
 
-Do not share this code with anyone else.
+Do not share this code with anyone else. It will expire after 15 minutes.
 
 " + resetCode);
 

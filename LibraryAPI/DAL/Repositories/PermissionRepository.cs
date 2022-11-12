@@ -39,6 +39,13 @@ namespace LibraryAPI.DAL.Repositories
             cmd.ExecuteNonQuery();
         }
 
+        public void DeleteByUserID(string userID)
+        {
+            DbCommand cmd = CreateCommand(@"DELETE FROM tPermission WHERE sUserID=@sUserID");
+            cmd.Parameters.Add(CreateParameter("@sUserID", userID));
+            cmd.ExecuteNonQuery();
+        }
+
         public void DeleteByLibraryID(int libraryID)
         {
             DbCommand cmd = CreateCommand(@"DELETE FROM tPermission WHERE iLibraryID=@iLibraryID");
