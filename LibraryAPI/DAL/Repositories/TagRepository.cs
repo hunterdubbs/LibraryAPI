@@ -22,6 +22,17 @@ namespace LibraryAPI.DAL.Repositories
             tag.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
         }
 
+        public void DeleteAllByLibraryID(int libraryID)
+        {
+            DbCommand xrefCmd = CreateCommand(@"DELETE FROM tBookTagXREF WHERE iTagID IN (SELECT iID FROM tTag WHERE iLibraryID=@iLibraryID)");
+            xrefCmd.Parameters.Add(CreateParameter("@iLibraryID", libraryID));
+            xrefCmd.ExecuteNonQuery();
+
+            DbCommand cmd = CreateCommand(@"DELETE FROM tTag WHERE iLibraryID=@iLibraryID");
+            cmd.Parameters.Add(CreateParameter("@iLibraryID", libraryID));
+            cmd.ExecuteNonQuery();
+        }
+
         public List<Tag> GetByLibraryID(int libraryID)
         {
             DbCommand cmd = CreateCommand(@"SELECT * FROM tTag WHERE iLibraryID=@iLibraryID");

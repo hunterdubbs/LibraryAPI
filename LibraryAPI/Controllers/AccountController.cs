@@ -69,6 +69,13 @@ namespace LibraryAPI.Controllers
                 unitOfWork.Begin();
 
                 libraryDataContext.PasswordResetCodeRepository.DeleteByUserID(userID);
+
+                var libaries = libraryDataContext.LibraryRepository.GetAllByUser(userID);
+                foreach (var library in libaries)
+                {
+                    libraryDataContext.TagRepository.DeleteAllByLibraryID(library.ID);
+                }
+
                 libraryDataContext.BookRepository.DeleteByUserID(userID);
                 libraryDataContext.CollectionRepository.DeleteByUserID(userID);
                 libraryDataContext.InviteRepository.DeleteByUserID(userID);
