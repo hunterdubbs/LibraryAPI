@@ -108,5 +108,20 @@ namespace LibraryAPI.LogicProcessors
             libraryDataContext.BookRepository.Delete(bookID);
             return result;
         }
+
+        public Result CreateTag(Tag tag, string userID, out bool permissionDenied)
+        {
+            Result result = new Result();
+            permissionDenied = false;
+
+            if(!permissionLogicProcessor.CheckPermissionOnLibraryID(tag.LibraryID, userID, Domain.Enum.PermissionType.Editor))
+            {
+                permissionDenied = true;
+                return result.Abort("You do not have permission to create tags in this library");
+            }
+
+            libraryDataContext.TagRepository.Add(tag);
+            return result;
+        }
     }
 }

@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <None Include=".ebextensions\https-redirect.config" />
+    <None Include="wwwroot\privacy-policy.html" />
   </ItemGroup>
 
 </Project>

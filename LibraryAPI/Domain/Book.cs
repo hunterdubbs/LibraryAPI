@@ -12,6 +12,7 @@ namespace LibraryAPI.Domain
         public string Title { get; set; }
         public string Synopsis { get; set; }
         public List<Author> Authors { get; set; }
+        public List<Tag> Tags { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime DatePublished { get; set; }
     }

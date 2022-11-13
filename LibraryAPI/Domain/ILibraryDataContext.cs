@@ -13,5 +13,6 @@ namespace LibraryAPI.Domain
         InviteRepository InviteRepository { get; }
         PasswordResetCodeRepository PasswordResetCodeRepository { get; }
         EmailVerificationCodeRepository EmailVerificationCodeRepository { get; }
+        TagRepository TagRepository { get; }
     }
 }

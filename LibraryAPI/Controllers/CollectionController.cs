@@ -1,6 +1,7 @@
 ﻿using LibraryAPI.DAL;
 using LibraryAPI.Domain;
 using LibraryAPI.Domain.Requests;
+using LibraryAPI.Domain.Responses;
 using LibraryAPI.LogicProcessors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -53,19 +54,32 @@ namespace LibraryAPI.Controllers
         [Route("list/{libraryID}")]
         public IActionResult GetCollections([FromRoute][Required] int libraryID)
         {
-            Result<List<Collection>> result;
+            Result<List<CollectionResponse>> result = new Result<List<CollectionResponse>>();
             bool permissionDenied = false;
             string userID = ClaimsHelper.GetUserIDFromClaim(User);
 
+            Result<List<Collection>> collections;
+            Dictionary<int, int> bookCounts;
             using (UnitOfWork unitOfWork = new UnitOfWork())
             {
-                result = collectionLogicProcessor.GetCollections(libraryID, userID, out permissionDenied);
+                collections = collectionLogicProcessor.GetCollections(libraryID, userID, out permissionDenied);
+                bookCounts = libraryDataContext.BookRepository.GetBookCountByCollection(libraryID);
             }
 
             if (!result.Succeeded)
             {
                 if (permissionDenied) return Forbid();
                 return StatusCode(500, result.Error);
+            }
+
+            result.Value = new List<CollectionResponse>();
+            foreach(var collection in collections.Value)
+            {
+                result.Value.Add(new CollectionResponse()
+                {
+                    Collection = collection,
+                    BookCount = bookCounts.TryGetValue(collection.ID, out int count) ? count : 0
+                });
             }
 
             return Ok(result.Value);

@@ -44,7 +44,7 @@ namespace LibraryAPI.DAL.Repositories
 
         public void DeleteByUserID(string userID)
         {
-            DbCommand cmd = CreateCommand(@"DELETE FROM tLibrary WHERE iID IN (SELECT iLibraryID FROM tPermission WHERE iPermissionLevel=3 AND sUserID=@sUserID");
+            DbCommand cmd = CreateCommand(@"DELETE FROM tLibrary WHERE iID NOT IN (SELECT iLibraryID FROM tPermission)");
             cmd.Parameters.Add(CreateParameter("@sUserID", userID));
             cmd.ExecuteNonQuery();
         }

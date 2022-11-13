@@ -21,11 +21,13 @@ namespace LibraryAPI.Controllers
     {
         protected ILibraryDataContext libraryDataContext;
         protected BookLogicProcessor bookLogicProcessor;
+        protected PermissionLogicProcessor permissionLogicProcessor;
 
-        public BookController(ILibraryDataContext libraryDataContext, BookLogicProcessor bookLogicProcessor)
+        public BookController(ILibraryDataContext libraryDataContext, BookLogicProcessor bookLogicProcessor, PermissionLogicProcessor permissionLogicProcessor)
         {
             this.libraryDataContext = libraryDataContext;
             this.bookLogicProcessor = bookLogicProcessor;
+            this.permissionLogicProcessor = permissionLogicProcessor;
         }
 
 
@@ -84,6 +86,7 @@ namespace LibraryAPI.Controllers
                 Title = request.Title,
                 Synopsis = request.Synopsis,
                 Authors = request.Authors,
+                Tags = request.Tags,
                 DateAdded = DateTime.Now,
                 DatePublished = request.DatePublished,
                 LibraryID = request.LibraryID
@@ -122,6 +125,7 @@ namespace LibraryAPI.Controllers
                 book.Synopsis = request.Synopsis;
                 book.DatePublished = request.DatePublished;
                 book.Authors = request.Authors;
+                book.Tags = request.Tags;
                 book.LibraryID = request.LibraryID;
 
                 Result result = bookLogicProcessor.ModifyBook(book, userID, out bool permissionDenied);
@@ -155,6 +159,52 @@ namespace LibraryAPI.Controllers
                 {
                     uow.Commit();
                     return Ok();
+                }
+                else
+                {
+                    if (permissionDenied) return Forbid();
+                    return StatusCode(500);
+                }
+            }
+        }
+
+        [HttpGet]
+        [Route("tags/{libraryID}")]
+        public IActionResult GetTags([FromRoute][Required] int libraryID)
+        {
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+            List<Tag> results;
+
+            using (UnitOfWork uow = new UnitOfWork())
+            {
+                if (!permissionLogicProcessor.CheckPermissionOnLibraryID(libraryID, userID, Domain.Enum.PermissionType.Viewer)) return Forbid();
+                results = libraryDataContext.TagRepository.GetByLibraryID(libraryID);
+            }
+
+            return Ok(results);
+        }
+
+        [HttpPost]
+        [Route("tags/create")]
+        public IActionResult CreateTag([FromBody][Required] CreateTagRequest request)
+        {
+            string userID = ClaimsHelper.GetUserIDFromClaim(User);
+            Tag tag = new Tag()
+            {
+                LibraryID = request.LibraryID,
+                Name = request.Name
+            };
+
+            using(UnitOfWork uow = new UnitOfWork())
+            {
+                uow.Begin();
+
+                Result result = bookLogicProcessor.CreateTag(tag, userID, out bool permissionDenied);
+
+                if (result.Succeeded)
+                {
+                    uow.Commit();
+                    return Ok(tag);
                 }
                 else
                 {

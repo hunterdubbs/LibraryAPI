@@ -92,5 +92,54 @@ SELECT Id, UserName FROM AspNetUsers WHERE UserName LIKE '%h%';
 
 SELECT * FROM tLibrary;
 
+SELECT * FROM tLibraryInvite;
+SELECT i.*, s.UserName as 'sInviterUsername', r.UserName as 'sRecipientUsername', l.sName as 'sLibraryName' FROM tLibraryInvite i INNER JOIN AspNetUsers s ON i.sInviterID=s.Id INNER JOIN AspNetUsers r ON i.sRecipientID=s.Id INNER JOIN tLibrary l on i.iLibraryID=l.iID;
 
 SELECT p.*, u.username FROM tPermission p INNER JOIN AspNetUsers u ON p.sUserID=u.Id WHERE p.iLibraryID=1;
+
+
+SELECT i.*, s.UserName as 'sInviterUsername', r.UserName as 'sRecipientUsername', l.sName as 'sLibraryName' FROM tLibraryInvite i LEFT OUTER JOIN AspNetUsers s ON i.sInviterID=s.Id LEFT OUTER JOIN AspNetUsers r ON i.sRecipientID=r.Id LEFT OUTER JOIN tLibrary l on i.iLibraryID=l.iID;
+
+
+SELECT * FROM tLibrary;
+SELECT * FROM tLibraryInvite;
+
+ALTER TABLE tCollection ADD COLUMN bUserModifiable BOOLEAN DEFAULT 1;
+ALTER TABLE tLibrary ADD COLUMN iDefaultCollectionID INT NULL;
+
+UPDATE tCollection SET bUserModifiable=1 WHERE iLibraryID=1;
+SELECT * FROM tCollection;
+UPDATE tLibrary SET iDefaultCollectionID=1 WHERE iID=1;
+SELECT * FROM tLibrary;
+
+CREATE TABLE tPasswordResetCodes(
+	iID INT PRIMARY KEY AUTO_INCREMENT,
+    sUserID VARCHAR(256) NOT NULL,
+    sHash NVARCHAR(256),
+    sSalt NVARCHAR(256),
+    dtExpires DATETIME,
+    FOREIGN KEY (sUserID) REFERENCES AspNetUsers (Id)
+);
+
+CREATE TABLE tEmailVerificationCodes(
+	iID INT PRIMARY KEY AUTO_INCREMENT,
+    sUserID VARCHAR(256) NOT NULL,
+    sCode NVARCHAR(10),
+    dtSent DATETIME,
+    bVerified BOOLEAN,
+    FOREIGN KEY (sUserID) REFERENCES AspNetUsers (Id)
+);
+
+CREATE TABLE tTag(
+	iID INT PRIMARY KEY AUTO_INCREMENT,
+    iLibraryID INT NOT NULL,
+    sName NVARCHAR(30),
+    FOREIGN KEY (iLibraryID) REFERENCES tLibrary (iID)
+);
+
+CREATE TABLE tBookTagXREF(
+	iBookID INT NOT NULL,
+    iTagID INT NOT NULL,
+    FOREIGN KEY (iBookID) REFERENCES tBook (iID),
+    FOREIGN KEY (iTagID) REFERENCES tTag (iID)
+);

@@ -23,6 +23,9 @@ namespace LibraryAPI.Domain.Requests
         [Required]
         public List<Author> Authors { get; set; } = new List<Author>();
 
+        [Required]
+        public List<Tag> Tags { get; set; } = new List<Tag>();
+
         public int? CollectionID { get; set; } = null;
     }
 }

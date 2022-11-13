@@ -132,6 +132,7 @@ namespace LibraryAPI
             }
 
             app.UseHttpsRedirection();
+            app.UseStaticFiles();
 
             app.UseRouting();
 

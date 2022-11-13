@@ -1,5 +1,6 @@
 ﻿using LibraryAPI.Domain;
 using LibraryAPI.Domain.Requests;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -284,6 +285,14 @@ Do not share this code with anyone else. It will expire after 15 minutes.
             catch (Exception) { }
 
             return BadRequest("Invalid reset code");
+        }
+
+        [HttpGet]
+        [Route("testAuth")]
+        [Authorize]
+        public IActionResult TestAuth()
+        {
+            return Ok();
         }
 
         private string BuildHtmlMessageWindow(string msg)

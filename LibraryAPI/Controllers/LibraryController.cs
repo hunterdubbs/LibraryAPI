@@ -1,6 +1,7 @@
 ﻿using LibraryAPI.DAL;
 using LibraryAPI.Domain;
 using LibraryAPI.Domain.Requests;
+using LibraryAPI.Domain.Responses;
 using LibraryAPI.LogicProcessors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -113,11 +114,21 @@ namespace LibraryAPI.Controllers
         public IActionResult GetLibraries()
         {
             string userID = ClaimsHelper.GetUserIDFromClaim(User);
-            List<Library> results = null;
+            List<LibraryResponse> results = new List<LibraryResponse>();
 
             using(UnitOfWork unitOfWork = new UnitOfWork())
             {
-                results = libraryDataContext.LibraryRepository.GetAllByUser(userID);
+                var libraries = libraryDataContext.LibraryRepository.GetAllByUser(userID);
+                var bookCounts = libraryDataContext.BookRepository.GetBookCountByLibrary();
+
+                foreach(var library in libraries)
+                {
+                    results.Add(new LibraryResponse()
+                    {
+                        Library = library,
+                        BookCount = bookCounts.TryGetValue(library.ID, out int count) ? count : 0
+                    });
+                }
             }
 
             return Ok(results);

@@ -16,12 +16,14 @@ namespace LibraryAPI.DAL.Repositories
         public Book GetByID(int id)
         {
             DbCommand cmd = CreateCommand(
-@"SELECT * 
+@"SELECT b.*, bax.iAuthorID, a.sFirstName, a.sLastName, t.iID AS 'iTagID', t.sName AS 'sTagName'
 FROM tBook b LEFT OUTER JOIN
 tBookAuthorXREF bax ON b.iID=bax.iBookID LEFT OUTER JOIN
-tAuthor a ON bax.iAuthorID=a.iID
+tAuthor a ON bax.iAuthorID=a.iID LEFT OUTER JOIN
+tBookTagXREF btx ON b.iID=btx.iBookID LEFT OUTER JOIN
+tTag t ON btx.iTagID=t.iID
 WHERE b.iID=@iID
-ORDER BY b.iID, bax.iListPosition");
+ORDER BY b.iID, bax.iListPosition, t.iID");
             cmd.Parameters.Add(CreateParameter("@iID", id));
             return ExtractFullData(cmd).FirstOrDefault();
         }
@@ -29,13 +31,15 @@ ORDER BY b.iID, bax.iListPosition");
         public List<Book> GetByCollectionID(int collectionID)
         {
             DbCommand cmd = CreateCommand(
-@"SELECT * 
+@"SELECT b.*, bax.iAuthorID, a.sFirstName, a.sLastName, t.iID AS 'iTagID', t.sName AS 'sTagName' 
 FROM tBook b INNER JOIN
 tCollectionBookXREF cbx ON b.iID=cbx.iBookID LEFT OUTER JOIN
 tBookAuthorXREF bax ON b.iID=bax.iBookID LEFT OUTER JOIN
-tAuthor a ON bax.iAuthorID=a.iID
+tAuthor a ON bax.iAuthorID=a.iID LEFT OUTER JOIN
+tBookTagXREF btx ON b.iID=btx.iBookID LEFT OUTER JOIN
+tTag t ON btx.iTagID=t.iID
 WHERE cbx.iCollectionID=@iCollectionID
-ORDER BY b.iID, bax.iListPosition");
+ORDER BY b.iID, bax.iListPosition, t.iID");
             cmd.Parameters.Add(CreateParameter("@iCollectionID", collectionID));
             return ExtractFullData(cmd);
         }
@@ -43,11 +47,13 @@ ORDER BY b.iID, bax.iListPosition");
         public List<Book> GetAll()
         {
             DbCommand cmd = CreateCommand(
-@"SELECT * 
+@"SELECT b.*, bax.iAuthorID, a.sFirstName, a.sLastName, t.iID AS 'iTagID', t.sName AS 'sTagName'
 FROM tBook b LEFT OUTER JOIN
 tBookAuthorXREF bax ON b.iID=bax.iBookID LEFT OUTER JOIN
-tAuthor a ON bax.iAuthorID=a.iID
-ORDER BY b.iID, bax.iListPosition");
+tAuthor a ON bax.iAuthorID=a.iID LEFT OUTER JOIN
+tBookTagXREF btx ON b.iID=btx.iBookID LEFT OUTER JOIN
+tTag t ON btx.iTagID=t.iID
+ORDER BY b.iID, bax.iListPosition, t.iID");
             return ExtractFullData(cmd);
         }
 
@@ -78,11 +84,19 @@ ORDER BY b.iID, bax.iListPosition");
 
             for(int i = 0; i < book.Authors.Count; i++)
             {
-                DbCommand authorCmd = CreateCommand(@"INSERT INTO tBookAuthorXREF(iBookID, iAuthorID, iListPosition) VALUES (@iBookID, @iAuthorID, @iListPosition");
+                DbCommand authorCmd = CreateCommand(@"INSERT INTO tBookAuthorXREF(iBookID, iAuthorID, iListPosition) VALUES (@iBookID, @iAuthorID, @iListPosition)");
                 authorCmd.Parameters.Add(CreateParameter("@iBookID", book.ID));
                 authorCmd.Parameters.Add(CreateParameter("@iAuthorID", book.Authors[i].ID));
                 authorCmd.Parameters.Add(CreateParameter("@iListPosition", i));
                 authorCmd.ExecuteNonQuery();
+            }
+
+            for(int i = 0; i < book.Tags.Count; i++)
+            {
+                DbCommand tagCmd = CreateCommand(@"INSERT INTO tBookTagXREF(iBookID, iTagID) VALUES (@iBookID, @iTagID)");
+                tagCmd.Parameters.Add(CreateParameter("@iBookID", book.ID));
+                tagCmd.Parameters.Add(CreateParameter("@iTagID", book.Tags[i].ID));
+                tagCmd.ExecuteNonQuery();
             }
         }
 
@@ -115,6 +129,18 @@ WHERE iID = @iID");
                 authorCmd.Parameters.Add(CreateParameter("@iAuthorID", book.Authors[i].ID));
                 authorCmd.Parameters.Add(CreateParameter("@iListPosition", i));
                 authorCmd.ExecuteNonQuery();
+            }
+
+            DbCommand cleanTagsCmd = CreateCommand(@"DELETE FROM tBookTagXREF WHERE iBookID=@iBookID");
+            cleanTagsCmd.Parameters.Add(CreateParameter("@iBookID", book.ID));
+            cleanTagsCmd.ExecuteNonQuery();
+
+            for (int i = 0; i < book.Tags.Count; i++)
+            {
+                DbCommand tagCmd = CreateCommand(@"INSERT INTO tBookTagXREF(iBookID, iTagID) VALUES (@iBookID, @iTagID)");
+                tagCmd.Parameters.Add(CreateParameter("@iBookID", book.ID));
+                tagCmd.Parameters.Add(CreateParameter("@iTagID", book.Tags[i].ID));
+                tagCmd.ExecuteNonQuery();
             }
         }
 
@@ -162,6 +188,43 @@ WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
             bookCmd.ExecuteNonQuery();
         }
 
+        public Dictionary<int, int> GetBookCountByLibrary()
+        {
+            Dictionary<int, int> results = new Dictionary<int, int>();
+
+            DbCommand cmd = CreateCommand(@"SELECT iLibraryID, COUNT(iID) AS 'Count' FROM tBook GROUP BY iLibraryID");
+            using (DbDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    int libraryID = ReadInt(reader, "iLibraryID");
+                    int count = ReadInt(reader, "Count");
+                    results.Add(libraryID, count);
+                }
+            }
+
+            return results;
+        }
+
+        public Dictionary<int, int> GetBookCountByCollection(int libraryID)
+        {
+            Dictionary<int, int> results = new Dictionary<int, int>();
+
+            DbCommand cmd = CreateCommand(@"SELECT iCollectionID, COUNT(iBookID) AS 'Count' FROM tCollectionBookXREF x INNER JOIN tCollection c ON (x.iCollectionID=c.iID) WHERE iLibraryID=@iLibraryID GROUP BY iCollectionID");
+            cmd.Parameters.Add(CreateParameter("@iLibraryID", libraryID));
+            using(DbDataReader reader = cmd.ExecuteReader())
+            {
+                while (reader.Read())
+                {
+                    int collectionID = ReadInt(reader, "iCollectionID");
+                    int count = ReadInt(reader, "Count");
+                    results.Add(collectionID, count);
+                }
+            }
+
+            return results;
+        }
+
         private List<Book> ExtractData(DbCommand cmd)
         {
             List<Book> results = new List<Book>();
@@ -189,6 +252,7 @@ WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
             using (DbDataReader reader = cmd.ExecuteReader())
             {
                 int lastID = 0;
+                int lastAuthorID = 0;
                 Book book = null;
                 while (reader.Read())
                 {
@@ -204,14 +268,30 @@ WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
                         book.DateAdded = ReadDateTime(reader, "dtAdded");
                         book.DatePublished = ReadDateTime(reader, "dtPublished");
                         book.Authors = new List<Author>();
+                        book.Tags = new List<Tag>();
                         lastID = nextID;
+                    
                     }
-                    Author author = new Author();
-                    author.ID = ReadInt(reader, "iAuthorID");
-                    if (author.ID == 0) continue;
-                    author.FirstName = ReadString(reader, "sFirstName");
-                    author.LastName = ReadString(reader, "sLastName");
-                    book.Authors.Add(author);
+                    int nextAuthorID = ReadInt(reader, "iAuthorID");
+                    if (nextAuthorID != 0 && lastAuthorID != nextAuthorID)
+                    {
+                        Author author = new Author();
+                        author.ID = nextAuthorID;
+                        if (author.ID == 0) continue;
+                        author.FirstName = ReadString(reader, "sFirstName");
+                        author.LastName = ReadString(reader, "sLastName");
+                        book.Authors.Add(author);
+                    }
+
+                    int nextTagID = ReadInt(reader, "iTagID");
+                    if(nextTagID != 0 && !book.Tags.Any(t => t.ID == nextTagID))
+                    {
+                        Tag tag = new Tag();
+                        tag.ID = nextTagID;
+                        tag.LibraryID = book.LibraryID;
+                        tag.Name = ReadString(reader, "sTagName");
+                        book.Tags.Add(tag);
+                    }
                 }
                 if (book != null) results.Add(book);
             }

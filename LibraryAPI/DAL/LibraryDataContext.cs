@@ -14,6 +14,7 @@ namespace LibraryAPI.DAL
         public InviteRepository InviteRepository { get; protected set; }
         public PasswordResetCodeRepository PasswordResetCodeRepository { get; protected set; }
         public EmailVerificationCodeRepository EmailVerificationCodeRepository { get; protected set; }
+        public TagRepository TagRepository { get; protected set; }
 
         public LibraryDataContext()
         {
@@ -26,6 +27,7 @@ namespace LibraryAPI.DAL
             InviteRepository = new InviteRepository();
             PasswordResetCodeRepository = new PasswordResetCodeRepository();
             EmailVerificationCodeRepository = new EmailVerificationCodeRepository();
+            TagRepository = new TagRepository();
         }
 
         public LibraryDataContext(UnitOfWork unitOfWork)
@@ -39,6 +41,7 @@ namespace LibraryAPI.DAL
             InviteRepository = new InviteRepository(unitOfWork);
             PasswordResetCodeRepository = new PasswordResetCodeRepository(unitOfWork);
             EmailVerificationCodeRepository = new EmailVerificationCodeRepository(unitOfWork);
+            TagRepository = new TagRepository(unitOfWork);
         }
     }
 }
