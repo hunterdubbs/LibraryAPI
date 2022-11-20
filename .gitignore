@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/builds
+/LibraryAPI/.config/dotnet-tools.json
+/LibraryAPI/aws-beanstalk-tools-defaults.json

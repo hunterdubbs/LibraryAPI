@@ -277,6 +277,7 @@ WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
                     {
                         Author author = new Author();
                         author.ID = nextAuthorID;
+                        lastAuthorID = nextAuthorID;
                         if (author.ID == 0) continue;
                         author.FirstName = ReadString(reader, "sFirstName");
                         author.LastName = ReadString(reader, "sLastName");
