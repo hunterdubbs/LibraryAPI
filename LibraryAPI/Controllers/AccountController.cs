@@ -53,7 +53,7 @@ namespace LibraryAPI.Controllers
 
             ApplicationUser user = await userManager.FindByIdAsync(userID);
             if (user == null) return BadRequest("Account not found");
-
+            if (user.UserName.ToUpper() == "EXAMPLE") return BadRequest("Demo account cannot be deleted");
             try
             {
                 bool verified = await userManager.CheckPasswordAsync(user, request.Password);
