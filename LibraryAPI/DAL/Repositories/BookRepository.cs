@@ -154,6 +154,10 @@ WHERE iID = @iID");
             collectionMembershipCmd.Parameters.Add(CreateParameter("@iBookID", bookID));
             collectionMembershipCmd.ExecuteNonQuery();
 
+            DbCommand bookTaagCmd = CreateCommand(@"DELETE FROM tBookTagXREF WHERE iBookID=@iBookID");
+            bookTaagCmd.Parameters.Add(CreateParameter("@iBookID", bookID));
+            bookTaagCmd.ExecuteNonQuery();
+
             DbCommand bookCmd = CreateCommand(@"DELETE FROM tBook WHERE iID=@iID");
             bookCmd.Parameters.Add(CreateParameter("@iID", bookID));
             bookCmd.ExecuteNonQuery();
@@ -178,6 +182,15 @@ INNER JOIN tPermission p ON l.iID=p.iLibraryID
 WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
             collectionMembershipCmd.Parameters.Add(CreateParameter("@sUserID", userID));
             collectionMembershipCmd.ExecuteNonQuery();
+
+            DbCommand bookTagsCmd = CreateCommand(@"DELETE FROM tBookTagXREF WHERE iBookID IN
+(SELECT b.iID
+FROM tBook b
+INNER JOIN tLibrary l ON b.iLibraryID=l.iID
+INNER JOIN tPermission p ON l.iID=p.iLibraryID
+WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
+            bookTagsCmd.Parameters.Add(CreateParameter("@sUserID", userID));
+            bookTagsCmd.ExecuteNonQuery();
 
             DbCommand bookCmd = CreateCommand(@"DELETE FROM tBook WHERE iLibraryID IN
 (SELECT l.iID
