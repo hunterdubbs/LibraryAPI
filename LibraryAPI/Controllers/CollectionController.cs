@@ -133,7 +133,7 @@ namespace LibraryAPI.Controllers
                 if (collection == null) return BadRequest("Collection not found");
 
                 if (!string.IsNullOrEmpty(request.Name)) collection.Name = request.Name;
-                if (!string.IsNullOrEmpty(request.Description)) collection.Description = request.Description;
+                collection.Description = request.Description;
 
                 Result result = collectionLogicProcessor.ModifyCollection(collection, userID, out bool permissionDenied);
 
