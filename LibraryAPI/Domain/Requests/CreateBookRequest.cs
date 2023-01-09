@@ -27,5 +27,11 @@ namespace LibraryAPI.Domain.Requests
         public List<Tag> Tags { get; set; } = new List<Tag>();
 
         public int? CollectionID { get; set; } = null;
+
+        [MaxLength(80)]
+        public string Series { get; set; }
+
+        [MaxLength(3)]
+        public string Volume { get; set; }
     }
 }

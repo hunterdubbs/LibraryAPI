@@ -95,6 +95,8 @@ namespace LibraryAPI.Controllers
                 Tags = request.Tags,
                 DateAdded = DateTime.Now,
                 DatePublished = request.DatePublished,
+                Series = request.Series,
+                Volume = request.Volume,
                 LibraryID = request.LibraryID
             };
 
@@ -133,6 +135,8 @@ namespace LibraryAPI.Controllers
                 book.Authors = request.Authors;
                 book.Tags = request.Tags;
                 book.LibraryID = request.LibraryID;
+                book.Series = request.Series;
+                book.Volume = request.Volume;
 
                 Result result = bookLogicProcessor.ModifyBook(book, userID, out bool permissionDenied);
 

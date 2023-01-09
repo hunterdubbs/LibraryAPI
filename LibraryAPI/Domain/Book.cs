@@ -15,5 +15,7 @@ namespace LibraryAPI.Domain
         public List<Tag> Tags { get; set; }
         public DateTime DateAdded { get; set; }
         public DateTime DatePublished { get; set; }
+        public string Series { get; set; }
+        public string Volume { get; set; }
     }
 }
