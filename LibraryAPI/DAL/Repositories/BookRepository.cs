@@ -74,7 +74,7 @@ ORDER BY b.iID, bax.iListPosition, t.iID");
     @sTitle,
     @sSynopsis,
     @dtAdded,
-    @dtPublished
+    @dtPublished,
     @sSeries,
     @sVolume
 )");
