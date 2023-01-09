@@ -29,9 +29,9 @@ namespace LibraryAPI.Domain.Requests
         public int? CollectionID { get; set; } = null;
 
         [MaxLength(80)]
-        public string Series { get; set; }
+        public string Series { get; set; } = "";
 
         [MaxLength(3)]
-        public string Volume { get; set; }
+        public string Volume { get; set; } = "";
     }
 }
