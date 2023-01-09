@@ -28,5 +28,11 @@ namespace LibraryAPI.Domain.Requests
 
         [Required]
         public List<Tag> Tags { get; set; } = new List<Tag>();
+
+        [MaxLength(80)]
+        public string Series { get; set; } = "";
+
+        [MaxLength(3)]
+        public string Volume { get; set; } = "";
     }
 }

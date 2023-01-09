@@ -4,14 +4,12 @@ using LibraryAPI.Domain.Requests;
 using LibraryAPI.Domain.Responses;
 using LibraryAPI.LogicProcessors;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Net.Http;
-using System.Security.Claims;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -95,6 +93,8 @@ namespace LibraryAPI.Controllers
                 Tags = request.Tags,
                 DateAdded = DateTime.Now,
                 DatePublished = request.DatePublished,
+                Series = request.Series,
+                Volume = request.Volume,
                 LibraryID = request.LibraryID
             };
 
@@ -133,6 +133,8 @@ namespace LibraryAPI.Controllers
                 book.Authors = request.Authors;
                 book.Tags = request.Tags;
                 book.LibraryID = request.LibraryID;
+                book.Series = request.Series;
+                book.Volume = request.Volume;
 
                 Result result = bookLogicProcessor.ModifyBook(book, userID, out bool permissionDenied);
 

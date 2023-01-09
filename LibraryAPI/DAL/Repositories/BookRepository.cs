@@ -66,19 +66,25 @@ ORDER BY b.iID, bax.iListPosition, t.iID");
     sTitle,
     sSynopsis,
     dtAdded,
-    dtPublished
+    dtPublished,
+    sSeries,
+    sVolume
 ) VALUES (
     @iLibraryID,
     @sTitle,
     @sSynopsis,
     @dtAdded,
     @dtPublished
+    @sSeries,
+    @sVolume
 )");
             cmd.Parameters.Add(CreateParameter("@iLibraryID", book.LibraryID));
             cmd.Parameters.Add(CreateParameter("@sTitle", book.Title));
             cmd.Parameters.Add(CreateParameter("@sSynopsis", book.Synopsis));
             cmd.Parameters.Add(CreateParameter("@dtAdded", book.DateAdded));
             cmd.Parameters.Add(CreateParameter("@dtPublished", book.DatePublished));
+            cmd.Parameters.Add(CreateParameter("@sSeries", book.Series));
+            cmd.Parameters.Add(CreateParameter("@sVolume", book.Volume));
             cmd.ExecuteNonQuery();
             book.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
 
@@ -108,7 +114,9 @@ ORDER BY b.iID, bax.iListPosition, t.iID");
     sTitle = @sTitle,
     sSynopsis = @sSynopsis,
     dtAdded = @dtAdded,
-    dtPublished = @dtPublished
+    dtPublished = @dtPublished,
+    sSeries = @sSeries,
+    sVolume = @sVolume
 WHERE iID = @iID");
             cmd.Parameters.Add(CreateParameter("@iLibraryID", book.LibraryID));
             cmd.Parameters.Add(CreateParameter("@sTitle", book.Title));
@@ -116,6 +124,8 @@ WHERE iID = @iID");
             cmd.Parameters.Add(CreateParameter("@dtAdded", book.DateAdded));
             cmd.Parameters.Add(CreateParameter("@dtPublished", book.DatePublished));
             cmd.Parameters.Add(CreateParameter("@iID", book.ID));
+            cmd.Parameters.Add(CreateParameter("@sSeries", book.Series));
+            cmd.Parameters.Add(CreateParameter("@sVolume", book.Volume));
             cmd.ExecuteNonQuery();
 
             DbCommand cleanAuthorsCmd = CreateCommand(@"DELETE FROM tBookAuthorXREF WHERE iBookID=@iBookID");
@@ -252,6 +262,8 @@ WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
                     result.Synopsis = ReadString(reader, "sSynopsis");
                     result.DateAdded = ReadDateTime(reader, "dtAdded");
                     result.DatePublished = ReadDateTime(reader, "dtPublished");
+                    result.Series = ReadString(reader, "sSeries");
+                    result.Volume = ReadString(reader, "sVolume");
                     results.Add(result);
                 }
             }
@@ -282,6 +294,8 @@ WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
                         book.DatePublished = ReadDateTime(reader, "dtPublished");
                         book.Authors = new List<Author>();
                         book.Tags = new List<Tag>();
+                        book.Series = ReadString(reader, "sSeries");
+                        book.Volume = ReadString(reader, "sVolume");
                         lastID = nextID;
                     
                     }
