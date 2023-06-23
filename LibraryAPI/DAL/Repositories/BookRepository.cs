@@ -296,11 +296,9 @@ WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
                         book.Tags = new List<Tag>();
                         book.Series = ReadString(reader, "sSeries");
                         book.Volume = ReadString(reader, "sVolume");
-                        lastID = nextID;
-                    
                     }
                     int nextAuthorID = ReadInt(reader, "iAuthorID");
-                    if (nextAuthorID != 0 && lastAuthorID != nextAuthorID)
+                    if (nextAuthorID != 0 && (lastAuthorID != nextAuthorID || lastID != nextID))
                     {
                         Author author = new Author();
                         author.ID = nextAuthorID;
@@ -319,6 +317,10 @@ WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
                         tag.LibraryID = book.LibraryID;
                         tag.Name = ReadString(reader, "sTagName");
                         book.Tags.Add(tag);
+                    }
+                    if(lastID != nextID)
+                    {
+                        lastID = nextID;
                     }
                 }
                 if (book != null) results.Add(book);
