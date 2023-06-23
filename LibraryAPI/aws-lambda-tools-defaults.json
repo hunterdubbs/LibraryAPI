@@ -1,0 +1,8 @@
+
+{
+    "region" : "us-east-2",
+    "profile" : "LibraryAPI",
+    "s3-bucket" : "libraryapiserverlessbucket",
+    "template"  : "serverless.template",
+    "stack-name" : "LibraryAPIServerless"
+}
