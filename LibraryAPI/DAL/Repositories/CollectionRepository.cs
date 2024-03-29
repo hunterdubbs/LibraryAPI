@@ -1,9 +1,7 @@
 ﻿using LibraryAPI.Domain;
-using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace LibraryAPI.DAL.Repositories
 {
@@ -69,14 +67,13 @@ WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
 
         public void Add(Collection collection)
         {
-            DbCommand cmd = CreateCommand(@"INSERT INTO tCollection(iLibraryID, iParentCollectionID, sName, sDescription, bUserModifiable) VALUES (@iLibraryID, @iParentCollectionID, @sName, @sDescription, @bUserModifiable)");
+            DbCommand cmd = CreateCommand(@"INSERT INTO tCollection(iLibraryID, iParentCollectionID, sName, sDescription, bUserModifiable) VALUES (@iLibraryID, @iParentCollectionID, @sName, @sDescription, @bUserModifiable) RETURNING iID");
             cmd.Parameters.Add(CreateParameter("@iLibraryID", collection.LibraryID));
             cmd.Parameters.Add(CreateParameter("@iParentCollectionID", collection.ParentCollectionID));
             cmd.Parameters.Add(CreateParameter("@sName", collection.Name));
             cmd.Parameters.Add(CreateParameter("@sDescription", collection.Description));
             cmd.Parameters.Add(CreateParameter("@bUserModifiable", collection.IsUserModifiable));
-            cmd.ExecuteNonQuery();
-            collection.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
+            collection.ID = (int)cmd.ExecuteScalar();
         }
 
         public void Update(Collection collection)
@@ -114,11 +111,11 @@ WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
         public List<CollectionMembership> GetAllWithMembershipStatusByBookID(int bookID, int libraryID)
         {
             DbCommand cmd = CreateCommand(
-@"SELECT c.*, MAX(IF(x.iBookID IS NOT NULL AND x.iBookID=@iBookID, 1, 0)) AS 'bIsMember'
+@"SELECT c.*, MAX(CASE WHEN (x.iBookID IS NOT NULL AND x.iBookID=@iBookID) THEN 1 ELSE 0 END) = 1 AS bIsMember
 FROM tCollection c LEFT OUTER JOIN 
 tCollectionBookXREF x ON c.iID=x.iCollectionID 
 WHERE iLibraryID=@iLibraryID
-GROUP BY c.iID, c.iLibraryID, c.iParentCollectionID, c.sName, c.sDescription;");
+GROUP BY c.iID, c.iLibraryID, c.iParentCollectionID, c.sName, c.sDescription");
             cmd.Parameters.Add(CreateParameter("@iBookID", bookID));
             cmd.Parameters.Add(CreateParameter("@iLibraryID", libraryID));
 

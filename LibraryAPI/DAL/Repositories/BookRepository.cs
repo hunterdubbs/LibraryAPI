@@ -1,9 +1,7 @@
 ﻿using LibraryAPI.Domain;
-using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace LibraryAPI.DAL.Repositories
 {
@@ -16,7 +14,7 @@ namespace LibraryAPI.DAL.Repositories
         public Book GetByID(int id)
         {
             DbCommand cmd = CreateCommand(
-@"SELECT b.*, bax.iAuthorID, a.sFirstName, a.sLastName, t.iID AS 'iTagID', t.sName AS 'sTagName'
+@"SELECT b.*, bax.iAuthorID, a.sFirstName, a.sLastName, t.iID AS iTagID, t.sName AS sTagName
 FROM tBook b LEFT OUTER JOIN
 tBookAuthorXREF bax ON b.iID=bax.iBookID LEFT OUTER JOIN
 tAuthor a ON bax.iAuthorID=a.iID LEFT OUTER JOIN
@@ -31,7 +29,7 @@ ORDER BY b.iID, bax.iListPosition, t.iID");
         public List<Book> GetByCollectionID(int collectionID)
         {
             DbCommand cmd = CreateCommand(
-@"SELECT b.*, bax.iAuthorID, a.sFirstName, a.sLastName, t.iID AS 'iTagID', t.sName AS 'sTagName' 
+@"SELECT b.*, bax.iAuthorID, a.sFirstName, a.sLastName, t.iID AS iTagID, t.sName AS sTagName
 FROM tBook b INNER JOIN
 tCollectionBookXREF cbx ON b.iID=cbx.iBookID LEFT OUTER JOIN
 tBookAuthorXREF bax ON b.iID=bax.iBookID LEFT OUTER JOIN
@@ -47,7 +45,7 @@ ORDER BY b.iID, bax.iListPosition, t.iID");
         public List<Book> GetAll()
         {
             DbCommand cmd = CreateCommand(
-@"SELECT b.*, bax.iAuthorID, a.sFirstName, a.sLastName, t.iID AS 'iTagID', t.sName AS 'sTagName'
+@"SELECT b.*, bax.iAuthorID, a.sFirstName, a.sLastName, t.iID AS iTagID, t.sName AS sTagName
 FROM tBook b LEFT OUTER JOIN
 tBookAuthorXREF bax ON b.iID=bax.iBookID LEFT OUTER JOIN
 tAuthor a ON bax.iAuthorID=a.iID LEFT OUTER JOIN
@@ -77,7 +75,7 @@ ORDER BY b.iID, bax.iListPosition, t.iID");
     @dtPublished,
     @sSeries,
     @sVolume
-)");
+) RETURNING iID");
             cmd.Parameters.Add(CreateParameter("@iLibraryID", book.LibraryID));
             cmd.Parameters.Add(CreateParameter("@sTitle", book.Title));
             cmd.Parameters.Add(CreateParameter("@sSynopsis", book.Synopsis));
@@ -85,10 +83,9 @@ ORDER BY b.iID, bax.iListPosition, t.iID");
             cmd.Parameters.Add(CreateParameter("@dtPublished", book.DatePublished));
             cmd.Parameters.Add(CreateParameter("@sSeries", book.Series));
             cmd.Parameters.Add(CreateParameter("@sVolume", book.Volume));
-            cmd.ExecuteNonQuery();
-            book.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
+            book.ID = (int)cmd.ExecuteScalar();
 
-            for(int i = 0; i < book.Authors.Count; i++)
+            for (int i = 0; i < book.Authors.Count; i++)
             {
                 DbCommand authorCmd = CreateCommand(@"INSERT INTO tBookAuthorXREF(iBookID, iAuthorID, iListPosition) VALUES (@iBookID, @iAuthorID, @iListPosition)");
                 authorCmd.Parameters.Add(CreateParameter("@iBookID", book.ID));
@@ -215,7 +212,7 @@ WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
         {
             Dictionary<int, int> results = new Dictionary<int, int>();
 
-            DbCommand cmd = CreateCommand(@"SELECT iLibraryID, COUNT(iID) AS 'Count' FROM tBook GROUP BY iLibraryID");
+            DbCommand cmd = CreateCommand(@"SELECT iLibraryID, COUNT(iID) AS Count FROM tBook GROUP BY iLibraryID");
             using (DbDataReader reader = cmd.ExecuteReader())
             {
                 while (reader.Read())
@@ -233,7 +230,7 @@ WHERE p.iPermissionLevel=3 AND p.sUserID=@sUserID)");
         {
             Dictionary<int, int> results = new Dictionary<int, int>();
 
-            DbCommand cmd = CreateCommand(@"SELECT iCollectionID, COUNT(iBookID) AS 'Count' FROM tCollectionBookXREF x INNER JOIN tCollection c ON (x.iCollectionID=c.iID) WHERE iLibraryID=@iLibraryID GROUP BY iCollectionID");
+            DbCommand cmd = CreateCommand(@"SELECT iCollectionID, COUNT(iBookID) AS Count FROM tCollectionBookXREF x INNER JOIN tCollection c ON (x.iCollectionID=c.iID) WHERE iLibraryID=@iLibraryID GROUP BY iCollectionID");
             cmd.Parameters.Add(CreateParameter("@iLibraryID", libraryID));
             using(DbDataReader reader = cmd.ExecuteReader())
             {

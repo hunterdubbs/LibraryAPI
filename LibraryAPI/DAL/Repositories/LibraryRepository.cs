@@ -1,11 +1,9 @@
 ﻿using LibraryAPI.Domain;
 using LibraryAPI.Domain.Enum;
-using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace LibraryAPI.DAL.Repositories
 {
@@ -17,13 +15,12 @@ namespace LibraryAPI.DAL.Repositories
 
         public void Add(Library library)
         {
-            DbCommand cmd = CreateCommand(@"INSERT INTO tLibrary(sName, sOwner, dtCreated, iDefaultCollectionID) VALUES (@sName, @sOwner, @dtCreated, @iDefaultCollectionID)");
+            DbCommand cmd = CreateCommand(@"INSERT INTO tLibrary(sName, sOwner, dtCreated, iDefaultCollectionID) VALUES (@sName, @sOwner, @dtCreated, @iDefaultCollectionID) RETURNING iID");
             cmd.Parameters.Add(CreateParameter("@sName", library.Name));
             cmd.Parameters.Add(CreateParameter("@sOwner", library.Owner));
             cmd.Parameters.Add(CreateParameter("@dtCreated", DateTime.Now));
             cmd.Parameters.Add(CreateParameter("@iDefaultCollectionID", library.DefaultCollectionID));
-            cmd.ExecuteNonQuery();
-            library.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
+            library.ID = (int)cmd.ExecuteScalar();
         }
 
         public void Update(Library library)
@@ -51,14 +48,14 @@ namespace LibraryAPI.DAL.Repositories
 
         public List<Library> GetAllByUser(string userID)
         {
-            DbCommand cmd = CreateCommand(@"SELECT l.*, p.iPermissionLevel FROM tLibrary l INNER JOIN tPermission p WHERE l.iID=p.iLibraryID AND p.sUserID=@sUserID AND p.iPermissionLevel > 0");
+            DbCommand cmd = CreateCommand(@"SELECT l.*, p.iPermissionLevel FROM tLibrary l INNER JOIN tPermission p ON l.iID=p.iLibraryID WHERE p.sUserID=@sUserID AND p.iPermissionLevel > 0");
             cmd.Parameters.Add(CreateParameter("@sUserID", userID));
             return ExtractData(cmd);
         }
 
         public Library GetByID(int id)
         {
-            DbCommand cmd = CreateCommand(@"SELECT l.*, p.iPermissionLevel FROM tLibrary l INNER JOIN tPermission p WHERE l.iID=p.iLibraryID AND l.iID=@iID AND p.iPermissionLevel > 0");
+            DbCommand cmd = CreateCommand(@"SELECT l.*, p.iPermissionLevel FROM tLibrary l INNER JOIN tPermission p ON l.iID=p.iLibraryID WHERE l.iID=@iID AND p.iPermissionLevel > 0");
             cmd.Parameters.Add(CreateParameter("@iID", id));
             return ExtractData(cmd).FirstOrDefault();
         }

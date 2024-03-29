@@ -1,9 +1,7 @@
 ﻿using LibraryAPI.Domain;
-using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace LibraryAPI.DAL.Repositories
 {
@@ -15,11 +13,10 @@ namespace LibraryAPI.DAL.Repositories
 
         public void Add(Author author)
         {
-            DbCommand cmd = CreateCommand(@"INSERT INTO tAuthor(sFirstName, sLastName) VALUES (@sFirstName, @sLastName)");
+            DbCommand cmd = CreateCommand(@"INSERT INTO tAuthor(sFirstName, sLastName) VALUES (@sFirstName, @sLastName) RETURNING iID");
             cmd.Parameters.Add(CreateParameter("@sFirstName", author.FirstName));
             cmd.Parameters.Add(CreateParameter("@sLastName", author.LastName));
-            cmd.ExecuteNonQuery();
-            author.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
+            author.ID = (int)cmd.ExecuteScalar();
         }
 
         public List<Author> GetByBookID(int bookID)
@@ -39,7 +36,7 @@ ORDER BY x.iListPosition");
             DbCommand cmd = CreateCommand(
 @"SELECT *
 FROM tAuthor
-WHERE CONCAT(sFirstName, ' ', sLastName) LIKE @searchTerm");
+WHERE CONCAT(sFirstName, ' ', sLastName) ILIKE @searchTerm");
             cmd.Parameters.Add(CreateParameter("@searchTerm", '%' + searchTerm + '%'));
             return ExtractData(cmd);
         }
