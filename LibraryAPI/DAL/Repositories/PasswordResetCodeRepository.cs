@@ -13,13 +13,12 @@ namespace LibraryAPI.DAL.Repositories
 
         public void Add(PasswordResetCode code)
         {
-            DbCommand cmd = CreateCommand(@"INSERT INTO tPasswordResetCodes(sUserID, sHash, sSalt, dtExpires) VALUES (@sUserID, @sHash, @sSalt, @dtExpires)");
+            DbCommand cmd = CreateCommand(@"INSERT INTO tPasswordResetCodes(sUserID, sHash, sSalt, dtExpires) VALUES (@sUserID, @sHash, @sSalt, @dtExpires) RETURNING iID");
             cmd.Parameters.Add(CreateParameter("@sUserID", code.UserID));
             cmd.Parameters.Add(CreateParameter("@sHash", code.Hash));
             cmd.Parameters.Add(CreateParameter("@sSalt", code.Salt));
             cmd.Parameters.Add(CreateParameter("@dtExpires", code.Expires));
-            cmd.ExecuteNonQuery();
-            code.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
+            code.ID = (int)cmd.ExecuteScalar();
         }
 
         public void Delete(int id)

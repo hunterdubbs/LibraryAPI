@@ -1,10 +1,6 @@
 ﻿using LibraryAPI.Domain;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace LibraryAPI.DAL
 {
@@ -15,6 +11,11 @@ namespace LibraryAPI.DAL
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            foreach(var entity in builder.Model.GetEntityTypes())
+            {
+                entity.SetTableName(entity.GetTableName().ToLower());
+            }
         }
     }
 }

@@ -1,9 +1,6 @@
 ﻿using LibraryAPI.Domain;
-using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace LibraryAPI.DAL.Repositories
 {
@@ -15,7 +12,7 @@ namespace LibraryAPI.DAL.Repositories
 
         public List<InvitableUser> SearchUsersByUsername(string searchTerm)
         {
-            DbCommand cmd = CreateCommand(@"SELECT Id, UserName FROM AspNetUsers WHERE UserName LIKE @searchTerm");
+            DbCommand cmd = CreateCommand(@"SELECT Id, UserName FROM AspNetUsers WHERE UserName ILIKE @searchTerm");
             cmd.Parameters.Add(CreateParameter("@searchTerm", '%' + searchTerm + '%'));
 
             List<InvitableUser> results = new List<InvitableUser>();

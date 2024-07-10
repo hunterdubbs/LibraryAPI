@@ -13,13 +13,12 @@ namespace LibraryAPI.DAL.Repositories
 
         public void Add(EmailVerificationCode code)
         {
-            DbCommand cmd = CreateCommand(@"INSERT INTO tEmailVerificationCodes(sUserID, sCode, dtSent, bVerified) VALUES (@sUserID, @sCode, @dtSent, @bVerified)");
+            DbCommand cmd = CreateCommand(@"INSERT INTO tEmailVerificationCodes(sUserID, sCode, dtSent, bVerified) VALUES (@sUserID, @sCode, @dtSent, @bVerified) RETURNING iID");
             cmd.Parameters.Add(CreateParameter("@sUserID", code.UserID));
             cmd.Parameters.Add(CreateParameter("@sCode", code.Code));
             cmd.Parameters.Add(CreateParameter("@dtSent", code.Sent));
             cmd.Parameters.Add(CreateParameter("@bVerified", code.IsVerified));
-            cmd.ExecuteNonQuery();
-            code.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
+            code.ID = (int)cmd.ExecuteScalar();
         }
 
         public void Update(EmailVerificationCode code)

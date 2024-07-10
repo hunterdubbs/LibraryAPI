@@ -1,9 +1,6 @@
 ﻿using LibraryAPI.Domain;
-using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace LibraryAPI.DAL.Repositories
 {
@@ -15,11 +12,10 @@ namespace LibraryAPI.DAL.Repositories
 
         public void Add(Tag tag)
         {
-            DbCommand cmd = CreateCommand(@"INSERT INTO tTag(iLibraryID, sName) VALUES (@iLibraryID, @sName)");
+            DbCommand cmd = CreateCommand(@"INSERT INTO tTag(iLibraryID, sName) VALUES (@iLibraryID, @sName) RETURNING iID");
             cmd.Parameters.Add(CreateParameter("@iLibraryID", tag.LibraryID));
             cmd.Parameters.Add(CreateParameter("@sName", tag.Name));
-            cmd.ExecuteNonQuery();
-            tag.ID = (int)((MySqlConnector.MySqlCommand)cmd).LastInsertedId;
+            tag.ID = (int)cmd.ExecuteScalar();
         }
 
         public void DeleteAllByLibraryID(int libraryID)
